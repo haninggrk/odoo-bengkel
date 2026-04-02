@@ -44,11 +44,9 @@
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_search"/>
         <field name="arch" type="xml">
-            <xpath expr="//filter[@name='filter_driver']" position="after">
+            <xpath expr="//search" position="inside">
                 <separator/>
                 <filter name="filter_from_sales" string="From Sales Order" domain="[('sale_order_id', '!=', False)]"/>
-            </xpath>
-            <xpath expr="//field[@name='name']" position="after">
                 <field name="sale_order_name" string="Sales Order"/>
             </xpath>
         </field>
