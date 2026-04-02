@@ -7,7 +7,7 @@ Type=simple
 User=root
 WorkingDirectory=/opt/odoo-bengkel/addons/odoo-bengkel/deploy
 Environment=WEBHOOK_SECRET=your-secret-here
-ExecStart=/usr/bin/python3 /opt/odoo-bengkel/addons/odoo-bengkel/deploy/webhook_server.py
+ExecStart=/usr/bin/node /opt/odoo-bengkel/addons/odoo-bengkel/deploy/webhook_server.js
 Restart=always
 RestartSec=10
 

@@ -4,14 +4,15 @@ This sets up automatic deployment when you push to GitHub.
 
 ## Quick Setup on Server
 
-### 1. Install Flask
+### 1. Pull the latest code
 ```bash
-pip3 install flask
+cd /opt/odoo-bengkel/addons/odoo-bengkel
+git pull
 ```
 
 ### 2. Copy the service file
 ```bash
-cp /opt/odoo-bengkel/addons/odoo-bengkel/deploy/webhook.service /etc/systemd/system/
+cp deploy/webhook.service /etc/systemd/system/
 ```
 
 ### 3. Edit the secret (important!)
@@ -21,10 +22,10 @@ nano /etc/systemd/system/webhook.service
 # To something secure like: Environment=WEBHOOK_SECRET=my-super-secret-key-123
 ```
 
-### 4. Configure the webhook script
-Edit `/opt/odoo-bengkel/addons/odoo-bengkel/deploy/webhook_server.py`:
+### 4. Configure the webhook script (optional)
+Edit `deploy/webhook_server.js`:
 - `REPO_PATH` - path to your addon folder
-- `ODOO_SERVICE` - your Odoo systemd service name (or `None` to skip restart)
+- `ODOO_SERVICE` - your Odoo systemd service name (or `null` to skip restart)
 
 ### 5. Start the service
 ```bash
