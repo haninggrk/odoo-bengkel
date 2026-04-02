@@ -1,0 +1,15 @@
+[Unit]
+Description=GitHub Webhook Listener for Odoo Auto-Deploy
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/odoo-bengkel/addons/odoo-bengkel/deploy
+Environment=WEBHOOK_SECRET=your-secret-here
+ExecStart=/usr/bin/python3 /opt/odoo-bengkel/addons/odoo-bengkel/deploy/webhook_server.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
