@@ -252,30 +252,32 @@ class SaleOrder(models.Model):
         """Open the fleet vehicle form view.
         
         Called when the user clicks the 'Vehicle' smart button on the SO form.
-        Returns an action dictionary that navigates to the linked vehicle.
+        Uses _for_xml_id() to fetch the original fleet action defined by the
+        fleet module, then overrides it to show only the specific record in form view.
+        This is the canonical Odoo pattern — it ensures the correct views,
+        context, and permissions are used.
         """
         self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Fleet Vehicle'),
-            'res_model': 'fleet.vehicle',
-            'view_mode': 'form',
-            'res_id': self.fleet_vehicle_id.id,
-            'context': {'create': False},
-        }
+        # Fetch the base action defined in fleet module's XML
+        action = self.env['ir.actions.act_window']._for_xml_id('fleet.fleet_vehicle_action')
+        # Override to show only the form view for this specific vehicle
+        action['views'] = [(False, 'form')]
+        action['res_id'] = self.fleet_vehicle_id.id
+        action['context'] = {'create': False}
+        return action
 
     def action_view_fleet_service(self):
         """Open the fleet service form view.
         
         Called when the user clicks the 'Service' smart button on the SO form.
-        Returns an action dictionary that navigates to the linked service.
+        Uses _for_xml_id() to fetch the standard fleet service action, ensuring
+        the correct form view and field visibility are applied.
         """
         self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Fleet Service'),
-            'res_model': 'fleet.vehicle.log.services',
-            'view_mode': 'form',
-            'res_id': self.fleet_service_id.id,
-            'context': {'create': False},
-        }
+        # Fetch the base action for fleet services defined in fleet module
+        action = self.env['ir.actions.act_window']._for_xml_id('fleet.fleet_vehicle_log_services_action')
+        # Override to show only the form view for this specific service
+        action['views'] = [(False, 'form')]
+        action['res_id'] = self.fleet_service_id.id
+        action['context'] = {'create': False}
+        return action

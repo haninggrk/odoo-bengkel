@@ -42,29 +42,17 @@ class FleetVehicle(models.Model):
         """Open the related sales order form view.
         
         This method is called when the user clicks the 'Sales Order' smart button
-        on the fleet vehicle form. It returns an action dictionary that tells
-        Odoo's web client to navigate to the linked sale order.
+        on the fleet vehicle form. Uses _for_xml_id() to fetch the standard sale
+        order action, then overrides it to show only this specific SO in form view.
         """
-        # ensure_one() raises an error if `self` contains zero or more than one record.
-        # This is a safety check — smart buttons always work on a single record.
         self.ensure_one()
 
-        # Guard clause: if no sales order is linked, do nothing.
         if not self.sale_order_id:
             return
 
-        # Return an action dictionary — this is how Odoo navigates between views.
-        #   'type'      -> 'ir.actions.act_window' opens a window/view
-        #   'res_model'  -> which model to display
-        #   'view_mode'  -> 'form' opens the form view (single record)
-        #   'res_id'     -> the specific record ID to display
-        #   'context'    -> {'create': False} hides the "Create" button so users
-        #                   can't create new SOs from this navigation
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Sales Order'),
-            'res_model': 'sale.order',
-            'view_mode': 'form',
-            'res_id': self.sale_order_id.id,
-            'context': {'create': False},
-        }
+        # Fetch the standard sale order action and override for specific record
+        action = self.env['ir.actions.act_window']._for_xml_id('sale.action_quotations_with_onboarding')
+        action['views'] = [(False, 'form')]
+        action['res_id'] = self.sale_order_id.id
+        action['context'] = {'create': False}
+        return action
