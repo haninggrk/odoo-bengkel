@@ -19,12 +19,9 @@
                 </button>
             </xpath>
             
-            <!-- Add Sale Order field in a new group -->
-            <xpath expr="//group[@name='vehicle_info']" position="after">
-                <group name="sales_info" string="Sales Information" invisible="not sale_order_id">
-                    <field name="sale_order_id"/>
-                    <field name="sale_order_name"/>
-                </group>
+            <!-- Add Sale Order field after driver_id -->
+            <xpath expr="//field[@name='driver_id']" position="after">
+                <field name="sale_order_id" readonly="1"/>
             </xpath>
         </field>
     </record>
