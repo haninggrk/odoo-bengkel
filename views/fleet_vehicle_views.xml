@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Inherit Fleet Vehicle Form View to add Sale Order field -->
+    <!-- ============================================================
+         FORM VIEW: Add Sales Order link to Fleet Vehicle form
+         ============================================================ -->
     <record id="fleet_vehicle_view_form_inherit_fleet_sales" model="ir.ui.view">
         <field name="name">fleet.vehicle.form.inherit.fleet.sales</field>
         <field name="model">fleet.vehicle</field>
+        <!-- Inherit the standard fleet vehicle form from the 'fleet' module -->
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
         <field name="arch" type="xml">
-            <!-- Add Sales Order smart button -->
+            <!-- SMART BUTTON: shows a "Sales Order" button on the vehicle form.
+                 'invisible="not sale_order_id"' hides it when no SO is linked.
+                 Unlike the SO view which uses a count widget, here we use a
+                 simple text label since there's always 0 or 1 linked SO. -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_sale_order"
                         type="object"
@@ -18,35 +24,48 @@
                     </div>
                 </button>
             </xpath>
-            
-            <!-- Add Sale Order field after driver_id -->
+
+            <!-- Display the linked sale order field after the driver field.
+                 readonly="1" prevents manual editing (the link is set by code). -->
             <xpath expr="//field[@name='driver_id']" position="after">
                 <field name="sale_order_id" readonly="1"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Inherit Fleet Vehicle Tree View to add Sale Order column -->
+    <!-- ============================================================
+         TREE/LIST VIEW: Add Sales Order Reference column
+         ============================================================ -->
     <record id="fleet_vehicle_view_tree_inherit_fleet_sales" model="ir.ui.view">
         <field name="name">fleet.vehicle.tree.inherit.fleet.sales</field>
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree"/>
         <field name="arch" type="xml">
+            <!-- Add the SO reference column after the license plate column.
+                 'optional="hide"' keeps it hidden by default to avoid clutter. -->
             <xpath expr="//field[@name='license_plate']" position="after">
                 <field name="sale_order_name" optional="hide"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Add Sale Order to Fleet Vehicle search -->
+    <!-- ============================================================
+         SEARCH VIEW: Add filter and search field for Sales Orders
+         ============================================================ -->
     <record id="fleet_vehicle_view_search_inherit_fleet_sales" model="ir.ui.view">
         <field name="name">fleet.vehicle.search.inherit.fleet.sales</field>
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="//search" position="inside">
+                <!-- <separator/> adds a visual divider between filter groups -->
                 <separator/>
+                <!-- FILTER: A predefined filter button that shows only vehicles
+                     created from sales orders. The domain expression checks
+                     if sale_order_id is not False (i.e., it has a value). -->
                 <filter name="filter_from_sales" string="From Sales Order" domain="[('sale_order_id', '!=', False)]"/>
+                <!-- SEARCH FIELD: Lets users type a sales order reference
+                     (like "S00001") to find matching vehicles. -->
                 <field name="sale_order_name" string="Sales Order"/>
             </xpath>
         </field>

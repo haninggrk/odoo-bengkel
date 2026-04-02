@@ -1,19 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Inherit Sale Order Form View to add License Plate field -->
+    <!--
+        VIEW INHERITANCE in Odoo:
+        Instead of rewriting the entire sale order form, we "inherit" the existing
+        view and inject our custom fields using XPath expressions.
+        This keeps our module compatible with future Odoo upgrades.
+    -->
+
+    <!-- ============================================================
+         FORM VIEW: Add License Plate and Vehicle Model to Sale Order
+         ============================================================ -->
     <record id="view_order_form_inherit_fleet_sales" model="ir.ui.view">
+        <!-- 'name' is a human-readable identifier for this view -->
         <field name="name">sale.order.form.inherit.fleet.sales</field>
+        <!-- 'model' specifies which Odoo model this view is for -->
         <field name="model">sale.order</field>
+        <!-- 'inherit_id' references the PARENT view we are extending.
+             'sale.view_order_form' is the XML ID of the standard sale order form. -->
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <!-- Add License Plate and Vehicle Model fields in main info group -->
+            <!-- XPath: find the 'partner_id' field and insert our fields AFTER it.
+                 'position="after"' means our fields appear right below the customer field. -->
             <xpath expr="//field[@name='partner_id']" position="after">
+                <!-- Existing Vehicle dropdown: only visible when the customer has vehicles.
+                     The domain filters fleet.vehicle records where driver_id = this SO's partner.
+                     This is the "suggestion" feature for returning customers. -->
+                <field name="existing_fleet_vehicle_id"
+                       placeholder="Select from previous vehicles..."
+                       domain="[('driver_id', '=', partner_id)]"
+                       invisible="not has_existing_vehicles"/>
                 <field name="license_plate" placeholder="e.g. AB 1234 CD"/>
                 <field name="fleet_vehicle_model_id" placeholder="Select vehicle model..."/>
             </xpath>
-            
-            <!-- Add Fleet Vehicle smart button -->
+
+            <!-- SMART BUTTONS for both Vehicle and Service -->
             <xpath expr="//div[@name='button_box']" position="inside">
+                <!-- Vehicle smart button: only visible after a vehicle is linked -->
                 <button name="action_view_fleet_vehicle"
                         type="object"
                         class="oe_stat_button"
@@ -21,21 +43,38 @@
                         invisible="fleet_vehicle_count == 0">
                     <field name="fleet_vehicle_count" widget="statinfo" string="Vehicle"/>
                 </button>
+                <!-- Service smart button: only visible after a service is created -->
+                <button name="action_view_fleet_service"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-wrench"
+                        invisible="fleet_service_count == 0">
+                    <field name="fleet_service_count" widget="statinfo" string="Service"/>
+                </button>
             </xpath>
-            
-            <!-- Add hidden field for fleet_vehicle_id -->
+
+            <!-- Hidden fields: must be in the form XML so the ORM loads them,
+                 even though they're invisible to the user. Needed for smart buttons,
+                 computed fields, domains, and onchange logic. -->
             <xpath expr="//sheet" position="inside">
                 <field name="fleet_vehicle_id" invisible="1"/>
+                <field name="fleet_service_id" invisible="1"/>
+                <field name="has_existing_vehicles" invisible="1"/>
             </xpath>
         </field>
     </record>
 
-    <!-- Inherit Sale Order Tree View to add License Plate column -->
+    <!-- ============================================================
+         TREE/LIST VIEW: Add License Plate column to Sale Order list
+         ============================================================ -->
     <record id="view_order_tree_inherit_fleet_sales" model="ir.ui.view">
         <field name="name">sale.order.tree.inherit.fleet.sales</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_tree"/>
         <field name="arch" type="xml">
+            <!-- Insert columns after the order name (SO number) column.
+                 'optional="show"' means the column is visible by default but can be toggled.
+                 'optional="hide"' means it's hidden by default but users can enable it. -->
             <xpath expr="//field[@name='name']" position="after">
                 <field name="license_plate" optional="show"/>
                 <field name="fleet_vehicle_model_id" optional="hide"/>
@@ -43,12 +82,17 @@
         </field>
     </record>
 
-    <!-- Add License Plate to search filters -->
+    <!-- ============================================================
+         SEARCH VIEW: Add License Plate to search/filter bar
+         ============================================================ -->
     <record id="view_sales_order_filter_inherit_fleet_sales" model="ir.ui.view">
         <field name="name">sale.order.search.inherit.fleet.sales</field>
         <field name="model">sale.order</field>
+        <!-- Note: the search view ID in 'sale' module is different from form/tree -->
         <field name="inherit_id" ref="sale.sale_order_view_search_inherit_sale"/>
         <field name="arch" type="xml">
+            <!-- Adding a search field allows users to type a license plate in the
+                 search bar and filter orders matching that plate. -->
             <xpath expr="//field[@name='name']" position="after">
                 <field name="license_plate" string="License Plate"/>
             </xpath>
