@@ -6,12 +6,10 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
-            <!-- Add License Plate and Vehicle Model fields after client_order_ref -->
-            <xpath expr="//field[@name='client_order_ref']" position="after">
+            <!-- Add License Plate and Vehicle Model fields in main info group -->
+            <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="license_plate" placeholder="e.g. AB 1234 CD"/>
-                <field name="fleet_vehicle_model_id" 
-                       options="{'no_create': True}"
-                       placeholder="Select vehicle model..."/>
+                <field name="fleet_vehicle_model_id" placeholder="Select vehicle model..."/>
             </xpath>
             
             <!-- Add Fleet Vehicle smart button -->
@@ -26,7 +24,7 @@
             </xpath>
             
             <!-- Add hidden field for fleet_vehicle_id -->
-            <xpath expr="//field[@name='partner_id']" position="before">
+            <xpath expr="//sheet" position="inside">
                 <field name="fleet_vehicle_id" invisible="1"/>
             </xpath>
         </field>
