@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Fleet Vehicle Form View to add Sale Order field -->
+    <record id="fleet_vehicle_view_form_inherit_fleet_sales" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.fleet.sales</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add Sales Order smart button -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_sale_order"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-shopping-cart"
+                        invisible="not sale_order_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Sales Order</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <!-- Add Sale Order field in a new group -->
+            <xpath expr="//group[@name='vehicle_info']" position="after">
+                <group name="sales_info" string="Sales Information" invisible="not sale_order_id">
+                    <field name="sale_order_id"/>
+                    <field name="sale_order_name"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Fleet Vehicle Tree View to add Sale Order column -->
+    <record id="fleet_vehicle_view_tree_inherit_fleet_sales" model="ir.ui.view">
+        <field name="name">fleet.vehicle.tree.inherit.fleet.sales</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='license_plate']" position="after">
+                <field name="sale_order_name" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Add Sale Order to Fleet Vehicle search -->
+    <record id="fleet_vehicle_view_search_inherit_fleet_sales" model="ir.ui.view">
+        <field name="name">fleet.vehicle.search.inherit.fleet.sales</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_driver']" position="after">
+                <separator/>
+                <filter name="filter_from_sales" string="From Sales Order" domain="[('sale_order_id', '!=', False)]"/>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="sale_order_name" string="Sales Order"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
