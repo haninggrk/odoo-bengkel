@@ -31,6 +31,7 @@
                        invisible="not has_existing_vehicles"/>
                 <field name="license_plate" placeholder="e.g. AB 1234 CD"/>
                 <field name="fleet_vehicle_model_id" placeholder="Select vehicle model..."/>
+                <field name="service_type_id" placeholder="Select service type..."/>
             </xpath>
 
             <!-- SMART BUTTONS for both Vehicle and Service -->

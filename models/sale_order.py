@@ -22,6 +22,16 @@ class SaleOrder(models.Model):
              'a fleet service will be created automatically.'
     )
 
+    # Many2one to 'fleet.service.type' lets the user pick the type of service
+    # (e.g., "Dedicated", "Oil Change", "Periodic Maintenance").
+    # The correct model name is 'fleet.service.type' (NOT 'fleet.vehicle.log.services.type').
+    service_type_id = fields.Many2one(
+        'fleet.service.type',
+        string='Service Type',
+        copy=True,
+        help='Select the type of fleet service to create when confirming this order.'
+    )
+
     # Many2one to 'fleet.vehicle.model' lets the user pick a vehicle brand/model
     # (e.g., Toyota Avanza, Honda Civic) from the fleet module's catalog.
     # copy=True means this value IS copied when duplicating the quotation,
@@ -183,17 +193,30 @@ class SaleOrder(models.Model):
         # Step 1: Find or create the fleet vehicle
         vehicle = self._find_or_create_fleet_vehicle()
 
-        # Step 2: Create the fleet service linked to the vehicle and this SO
+        # Step 2: Determine the service type.
+        # Use the one selected by the user, or default to "Dedicated",
+        # or fall back to the first available service type.
+        service_type = self.service_type_id
+        if not service_type:
+            service_type = self.env['fleet.service.type'].search(
+                [('name', '=', 'Dedicated')], limit=1
+            )
+        if not service_type:
+            service_type = self.env['fleet.service.type'].search([], limit=1)
+
+        # Step 3: Create the fleet service linked to the vehicle and this SO.
+        # 'service_type_id' is a required field on fleet.vehicle.log.services.
         service_vals = {
             'vehicle_id': vehicle.id,
             'sale_order_id': self.id,
             'description': _('Service from Sales Order %s') % self.name,
             'date': fields.Date.today(),
             'company_id': self.company_id.id,
+            'service_type_id': service_type.id if service_type else False,
         }
         service = self.env['fleet.vehicle.log.services'].create(service_vals)
 
-        # Step 3: Link both records back to this sales order
+        # Step 4: Link both records back to this sales order
         self.fleet_service_id = service.id
         self.fleet_vehicle_id = vehicle.id
 
