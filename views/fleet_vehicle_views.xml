@@ -31,9 +31,6 @@
                 <field name="sale_order_id" readonly="1"/>
             </xpath>
 
-            <xpath expr="//field[@name='expiration_date']" position="before">
-                <field name="service_date" readonly="1"/>
-            </xpath>
         </field>
     </record>
 
