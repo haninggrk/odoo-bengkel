@@ -307,15 +307,11 @@ class SaleOrder(models.Model):
             'sale_order_id': self.id,
             'description': _('Service from Sales Order %s') % self.name,
             'date': self.service_date or fields.Date.today(),
+            'amount': self.amount_total,
             'company_id': self.company_id.id,
             'service_type_id': service_type.id if service_type else False,
         }
-        service_model = self.env['fleet.vehicle.log.services']
-        if 'cost' in service_model._fields:
-            service_vals['cost'] = self.amount_total
-        elif 'amount' in service_model._fields:
-            service_vals['amount'] = self.amount_total
-        service = service_model.create(service_vals)
+        service = self.env['fleet.vehicle.log.services'].create(service_vals)
 
         # Step 4: Link both records back to this sales order
         self.fleet_service_id = service.id
