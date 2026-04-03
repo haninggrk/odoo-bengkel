@@ -48,6 +48,14 @@
                 <field name="commission_amount" readonly="1"/>
             </xpath>
 
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
+                <field name="service_task_id" optional="show" invisible="product_id.type != 'service'"/>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='tax_id' or @name='tax_ids']" position="after">
+                <field name="service_commission_amount" optional="show" readonly="1"/>
+            </xpath>
+
             <!-- SMART BUTTONS for both Vehicle and Service -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <!-- Vehicle smart button: only visible after a vehicle is linked -->
@@ -78,19 +86,6 @@
                 <field name="license_plate" invisible="1"/>
                 <field name="fleet_vehicle_model_id" invisible="1"/>
                 <field name="show_gross_commission" invisible="1"/>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="view_order_line_tree_inherit_fleet_sales" model="ir.ui.view">
-        <field name="name">sale.order.line.tree.inherit.fleet.sales</field>
-        <field name="model">sale.order.line</field>
-        <field name="inherit_id" ref="sale.view_order_line_tree"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='product_uom_id']" position="after">
-                <field name="service_task_id" optional="show" invisible="product_id.type != 'service'"/>
-                <field name="service_commission_rate" optional="show" invisible="product_id.type != 'service'"/>
-                <field name="service_commission_amount" optional="show" readonly="1" invisible="service_commission_amount == 0"/>
             </xpath>
         </field>
     </record>
