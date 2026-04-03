@@ -11,3 +11,13 @@ class ProductTemplate(models.Model):
         help='Default commission percentage for service products. '
              'Used as the default value on Sales Order lines.',
     )
+
+
+class ProductProduct(models.Model):
+    _inherit = 'product.product'
+
+    service_commission_rate = fields.Float(
+        string='Service Commission (%)',
+        related='product_tmpl_id.service_commission_rate',
+        readonly=False,
+    )

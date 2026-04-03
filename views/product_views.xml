@@ -5,7 +5,18 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='list_price']" position="after">
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="service_commission_rate"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_product_form_inherit_fleet_sales_commission" model="ir.ui.view">
+        <field name="name">product.product.form.inherit.fleet.sales.commission</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_normal_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='categ_id']" position="after">
                 <field name="service_commission_rate"/>
             </xpath>
         </field>
