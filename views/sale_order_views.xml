@@ -49,7 +49,7 @@
             </xpath>
 
             <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
-                <field name="assigned_employee_id" optional="show" invisible="product_id.type != 'service'"/>
+                <field name="assigned_employee_id" optional="show" readonly="display_type"/>
                 <field name="generated_task_id" optional="hide" readonly="1"/>
             </xpath>
 
