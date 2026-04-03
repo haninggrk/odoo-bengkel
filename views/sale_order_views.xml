@@ -27,12 +27,8 @@
                 <field name="existing_fleet_vehicle_id"
                        placeholder="Select or create a vehicle..."
                        domain="['|', ('driver_id', '=', partner_id), ('driver_id', '=', False)]"
-                      options="{'no_create': True}"/>
-                  <button name="action_open_vehicle_create_wizard"
-                       type="object"
-                       string="Create New"
-                       class="oe_link"
-                       icon="fa-plus"/>
+                      options="{'no_quick_create': True}"
+                      context="{'form_view_ref': 'OdooWhatsappFleetSales.fleet_vehicle_quick_create_view', 'default_driver_id': partner_id, 'default_company_id': company_id, 'default_sale_order_id': id}"/>
                 <field name="service_type_id" placeholder="Select service type..."/>
             </xpath>
 
@@ -73,21 +69,18 @@
         </field>
     </record>
 
-    <record id="fleet_vehicle_create_wizard_view" model="ir.ui.view">
-        <field name="name">fleet.vehicle.create.wizard.form</field>
-        <field name="model">fleet.vehicle.create.wizard</field>
+    <record id="fleet_vehicle_quick_create_view" model="ir.ui.view">
+        <field name="name">fleet.vehicle.quick.create.fleet.sales</field>
+        <field name="model">fleet.vehicle</field>
         <field name="arch" type="xml">
-            <form string="Create Vehicle">
-                <group>
-                    <field name="sale_order_id" invisible="1"/>
+            <form string="Vehicle">
+                <sheet>
+                    <group>
                     <field name="license_plate"/>
                     <field name="model_id"/>
                     <field name="odometer"/>
-                </group>
-                <footer>
-                    <button name="action_create_vehicle" type="object" string="Create New" class="btn-primary"/>
-                    <button string="Cancel" special="cancel"/>
-                </footer>
+                    </group>
+                </sheet>
             </form>
         </field>
     </record>
