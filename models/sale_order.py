@@ -312,6 +312,7 @@ class SaleOrder(models.Model):
             'sale_order_id': self.id,
             'description': _('Service from Sales Order %s') % self.name,
             'date': self.service_date or fields.Date.today(),
+            'cost': self.amount_total,
             'company_id': self.company_id.id,
             'service_type_id': service_type.id if service_type else False,
         }
