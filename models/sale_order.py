@@ -371,7 +371,7 @@ class SaleOrder(models.Model):
                 'task_id': task.id,
                 'employee_id': line.assigned_employee_id.id,
                 'date': self.service_date or fields.Date.today(),
-                'unit_amount': line.product_uom_qty or 1.0,
+                'unit_amount': 0.0,
                 'company_id': self.company_id.id,
             }
             if line.assigned_employee_id.user_id:
