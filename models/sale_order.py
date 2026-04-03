@@ -190,12 +190,12 @@ class SaleOrder(models.Model):
         'order_line.price_total',
         'order_line.price_subtotal',
         'order_line.service_commission_amount',
-        'order_line.product_id.product_tmpl_id.detailed_type',
+        'order_line.product_id.type',
     )
     def _compute_commission_amount(self):
         for order in self:
             service_lines = order.order_line.filtered(
-                lambda l: l.product_id and l.product_id.product_tmpl_id.detailed_type == 'service'
+                lambda l: l.product_id and l.product_id.type == 'service'
             )
             gross_service_base = sum(service_lines.mapped('price_total'))
             nett_service_base = sum(service_lines.mapped('price_subtotal'))
@@ -431,10 +431,10 @@ class SaleOrderLine(models.Model):
         store=True,
     )
 
-    @api.depends('price_subtotal', 'service_commission_rate', 'product_id.product_tmpl_id.detailed_type')
+    @api.depends('price_subtotal', 'service_commission_rate', 'product_id.type')
     def _compute_service_commission_amount(self):
         for line in self:
-            if line.product_id and line.product_id.product_tmpl_id.detailed_type == 'service':
+            if line.product_id and line.product_id.type == 'service':
                 line.service_commission_amount = line.price_subtotal * (line.service_commission_rate / 100.0)
             else:
                 line.service_commission_amount = 0.0
@@ -442,7 +442,7 @@ class SaleOrderLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id_service_commission_rate(self):
         for line in self:
-            if line.product_id and line.product_id.product_tmpl_id.detailed_type == 'service':
+            if line.product_id and line.product_id.type == 'service':
                 line.service_commission_rate = line.product_id.product_tmpl_id.service_commission_rate
             else:
                 line.service_commission_rate = 0.0
@@ -457,7 +457,7 @@ class SaleOrderLine(models.Model):
             if not product_id:
                 continue
             product = Product.browse(product_id)
-            if product and product.product_tmpl_id.detailed_type == 'service':
+            if product and product.type == 'service':
                 vals['service_commission_rate'] = product.product_tmpl_id.service_commission_rate
             else:
                 vals['service_commission_rate'] = 0.0
