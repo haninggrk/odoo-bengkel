@@ -5,7 +5,7 @@
 {
     'name': 'Fleet Sales',
     # Version format: <odoo_version>.<module_major>.<module_minor>.<module_patch>
-    'version': '19.0.2.1.8',
+    'version': '19.0.2.1.9',
     # Category helps organize the module in Odoo's Apps store / settings.
     'category': 'Sales/Sales',
     'summary': 'Link Sales Orders to Fleet Services with automatic vehicle and service creation',
@@ -28,7 +28,6 @@ This module adds the following features:
     #   'sale'  -> provides the sale.order model
     #   'fleet' -> provides fleet.vehicle and fleet.vehicle.model models
     'depends': [
-        'web',
         'sale',
         'fleet',
     ],
@@ -40,11 +39,6 @@ This module adds the following features:
         'views/sale_order_views.xml',
         'views/fleet_vehicle_views.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'fleet_sales/static/src/js/m2o_create_edit_patch.js',
-        ],
-    },
     # installable=True means this module can be installed.
     'installable': True,
     # auto_install=False means users must explicitly install this module.

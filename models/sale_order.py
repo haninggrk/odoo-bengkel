@@ -308,6 +308,22 @@ class SaleOrder(models.Model):
         action['context'] = {'create': False}
         return action
 
+    def action_open_selected_vehicle_page(self):
+        """Open the selected vehicle in the internal sales/fleet route."""
+        self.ensure_one()
+        if not self.existing_fleet_vehicle_id:
+            return False
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '%s/odoo/sales/%s/fleet/%s' % (
+                self.get_base_url(),
+                self.id,
+                self.existing_fleet_vehicle_id.id,
+            ),
+            'target': 'self',
+        }
+
     def action_view_fleet_service(self):
         """Open the fleet service form view.
         
