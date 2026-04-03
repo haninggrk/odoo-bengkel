@@ -27,7 +27,7 @@
                 <field name="existing_fleet_vehicle_id"
                        placeholder="Select or create a vehicle..."
                        domain="['|', ('driver_id', '=', partner_id), ('driver_id', '=', False)]"
-                      options="{'no_quick_create': True, 'no_create_edit': True}"/>
+                      options="{'no_create': True}"/>
                   <button name="action_open_vehicle_create_wizard"
                        type="object"
                        string="Create New"
