@@ -308,6 +308,22 @@ class SaleOrder(models.Model):
         action['context'] = {'create': False}
         return action
 
+    def action_open_vehicle_create_wizard(self):
+        """Open a lightweight modal to create and attach a vehicle."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Create Vehicle'),
+            'res_model': 'fleet.vehicle.create.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_sale_order_id': self.id,
+                'default_license_plate': self.license_plate,
+                'default_model_id': self.fleet_vehicle_model_id.id,
+            },
+        }
+
     def action_view_fleet_service(self):
         """Open the fleet service form view.
         
