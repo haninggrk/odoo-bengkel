@@ -125,6 +125,10 @@ class SaleOrder(models.Model):
         string='Commission Mode',
         compute='_compute_commission_mode',
     )
+    show_gross_commission = fields.Boolean(
+        string='Show Gross Commission',
+        compute='_compute_show_gross_commission',
+    )
     commission_amount = fields.Monetary(
         string='Commission Amount',
         currency_field='currency_id',
@@ -167,9 +171,9 @@ class SaleOrder(models.Model):
             order.fleet_service_count = 1 if order.fleet_service_id else 0
 
     def _compute_commission_mode(self):
-        param = self.env['ir.config_parameter'].sudo().get_param(
-            'fleet_sales.commission_mode', default='per_product'
-        )
+        params = self.env['ir.config_parameter'].sudo()
+        param = params.get_param('fleet_sales.commission_mode', default='per_product')
+        enable_gross = params.get_param('fleet_sales.enable_gross_commission', default='False') == 'True'
         valid_modes = {
             'per_product',
             'nett_service',
@@ -178,8 +182,17 @@ class SaleOrder(models.Model):
             'gross_all',
         }
         mode = param if param in valid_modes else 'per_product'
+        if not enable_gross and mode in {'gross_service', 'gross_all'}:
+            mode = 'per_product'
         for order in self:
             order.commission_mode = mode
+
+    def _compute_show_gross_commission(self):
+        enabled = self.env['ir.config_parameter'].sudo().get_param(
+            'fleet_sales.enable_gross_commission', default='False'
+        ) == 'True'
+        for order in self:
+            order.show_gross_commission = enabled
 
     @api.depends(
         'commission_mode',
