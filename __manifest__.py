@@ -5,7 +5,7 @@
 {
     'name': 'Fleet Sales',
     # Version format: <odoo_version>.<module_major>.<module_minor>.<module_patch>
-    'version': '19.0.2.1.21',
+    'version': '19.0.2.1.22',
     # Category helps organize the module in Odoo's Apps store / settings.
     'category': 'Sales/Sales',
     'summary': 'Link Sales Orders to Fleet Services with automatic vehicle and service creation',
@@ -30,6 +30,7 @@ This module adds the following features:
     'depends': [
         'sale',
         'fleet',
+        'project',
     ],
     # 'data' lists XML/CSV files loaded in order during install/upgrade.
     # Security files should come FIRST so that access rights exist before
@@ -49,4 +50,5 @@ This module adds the following features:
     # application=False means this is a supporting module, not a full app.
     # Full apps (True) appear in the main Odoo Apps menu.
     'application': False,
+    'post_init_hook': 'post_init_hook',
 }
