@@ -21,6 +21,14 @@ class SaleOrder(models.Model):
         help='Vehicle license plate number. When the order is confirmed, '
              'a fleet service will be created automatically.'
     )
+    
+    service_date = fields.Date(
+        string='Service Date',
+        copy=True,
+        help='Date of the fleet service. Defaults to today\'s date when the service is created.'
+    )
+    
+    
 
     # Many2one to 'fleet.service.type' lets the user pick the type of service
     # (e.g., "Dedicated", "Oil Change", "Periodic Maintenance").
@@ -48,10 +56,9 @@ class SaleOrder(models.Model):
     # When selected, an @api.onchange auto-fills license_plate and vehicle model.
     existing_fleet_vehicle_id = fields.Many2one(
         'fleet.vehicle',
-        string='Existing Vehicle',
+        string='Vehicle',
         copy=False,
-        help='Select a vehicle from the customer\'s history. '
-             'This will auto-fill the license plate and vehicle model.',
+        help='Select an existing vehicle for this customer or create a new one.',
     )
 
     # Computed boolean: True if the selected customer has at least one vehicle
@@ -210,7 +217,7 @@ class SaleOrder(models.Model):
             'vehicle_id': vehicle.id,
             'sale_order_id': self.id,
             'description': _('Service from Sales Order %s') % self.name,
-            'date': fields.Date.today(),
+            'date': self.service_date or fields.Date.today(),
             'company_id': self.company_id.id,
             'service_type_id': service_type.id if service_type else False,
         }
@@ -239,7 +246,19 @@ class SaleOrder(models.Model):
 
         # If the user selected an existing vehicle, use it directly
         if self.existing_fleet_vehicle_id:
-            return self.existing_fleet_vehicle_id
+            vehicle = self.existing_fleet_vehicle_id
+            update_vals = {}
+            if not vehicle.sale_order_id:
+                update_vals['sale_order_id'] = self.id
+            if self.partner_id and not vehicle.driver_id:
+                update_vals['driver_id'] = self.partner_id.id
+            if self.company_id and not vehicle.company_id:
+                update_vals['company_id'] = self.company_id.id
+            if self.fleet_vehicle_model_id and not vehicle.model_id:
+                update_vals['model_id'] = self.fleet_vehicle_model_id.id
+            if update_vals:
+                vehicle.write(update_vals)
+            return vehicle
 
         # Search for an existing vehicle with this license plate
         existing = self.env['fleet.vehicle'].search([

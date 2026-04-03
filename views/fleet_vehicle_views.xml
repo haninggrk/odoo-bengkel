@@ -30,6 +30,10 @@
             <xpath expr="//field[@name='driver_id']" position="after">
                 <field name="sale_order_id" readonly="1"/>
             </xpath>
+
+            <xpath expr="//field[@name='expiration_date']" position="before">
+                <field name="service_date" readonly="1"/>
+            </xpath>
         </field>
     </record>
 
@@ -45,6 +49,7 @@
                  'optional="hide"' keeps it hidden by default to avoid clutter. -->
             <xpath expr="//field[@name='license_plate']" position="after">
                 <field name="sale_order_name" optional="hide"/>
+                <field name="service_date" optional="hide"/>
             </xpath>
         </field>
     </record>

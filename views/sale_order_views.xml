@@ -22,15 +22,13 @@
             <!-- XPath: find the 'partner_id' field and insert our fields AFTER it.
                  'position="after"' means our fields appear right below the customer field. -->
             <xpath expr="//field[@name='partner_id']" position="after">
-                <!-- Existing Vehicle dropdown: only visible when the customer has vehicles.
-                     The domain filters fleet.vehicle records where driver_id = this SO's partner.
-                     This is the "suggestion" feature for returning customers. -->
+                 <!-- Vehicle dropdown: users can pick an existing customer vehicle
+                     or create a new one through a simplified modal form. -->
                 <field name="existing_fleet_vehicle_id"
-                       placeholder="Select from previous vehicles..."
-                       domain="[('driver_id', '=', partner_id)]"
-                       invisible="not has_existing_vehicles"/>
-                <field name="license_plate" placeholder="e.g. AB 1234 CD"/>
-                <field name="fleet_vehicle_model_id" placeholder="Select vehicle model..."/>
+                       placeholder="Select or create a vehicle..."
+                       domain="['|', ('driver_id', '=', partner_id), ('driver_id', '=', False)]"
+                       options="{'no_quick_create': True}"
+                       context="{'form_view_ref': 'OdooWhatsappFleetSales.fleet_vehicle_quick_create_view', 'default_driver_id': partner_id, 'default_company_id': company_id, 'default_sale_order_id': id}"/>
                 <field name="service_type_id" placeholder="Select service type..."/>
             </xpath>
 
@@ -61,7 +59,25 @@
                 <field name="fleet_vehicle_id" invisible="1"/>
                 <field name="fleet_service_id" invisible="1"/>
                 <field name="has_existing_vehicles" invisible="1"/>
+                <field name="license_plate" invisible="1"/>
+                <field name="fleet_vehicle_model_id" invisible="1"/>
             </xpath>
+        </field>
+    </record>
+
+    <record id="fleet_vehicle_quick_create_view" model="ir.ui.view">
+        <field name="name">fleet.vehicle.quick.create.fleet.sales</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle">
+                <sheet>
+                    <group>
+                        <field name="license_plate" required="1"/>
+                        <field name="model_id" required="1"/>
+                        <field name="odometer"/>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 

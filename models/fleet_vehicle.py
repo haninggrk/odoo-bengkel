@@ -38,6 +38,13 @@ class FleetVehicle(models.Model):
         store=True,
     )
 
+    service_date = fields.Date(
+        string='Service Date',
+        related='sale_order_id.service_date',
+        readonly=True,
+        store=True,
+    )
+
     def action_view_sale_order(self):
         """Open the related sales order form view.
         
