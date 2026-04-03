@@ -289,9 +289,15 @@ class SaleOrder(models.Model):
         vehicle = self._find_or_create_fleet_vehicle()
 
         # Step 2: Determine the service type.
-        # Use the one selected by the user, or default to "Dedicated",
-        # or fall back to the first available service type.
-        service_type = self.service_type_id
+        # Priority:
+        # 1) Task selected on a service order line
+        # 2) Header-level service type
+        # 3) "Dedicated" fallback
+        # 4) First available service type
+        line_task = self.order_line.filtered(
+            lambda l: l.product_id and l.product_id.type == 'service' and l.service_task_id
+        )[:1].service_task_id
+        service_type = line_task or self.service_type_id
         if not service_type:
             service_type = self.env['fleet.service.type'].search(
                 [('name', '=', 'Dedicated')], limit=1
@@ -432,6 +438,11 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    service_task_id = fields.Many2one(
+        'fleet.service.type',
+        string='Task',
+        help='Task/service type for this line. Available for service products.',
+    )
     service_commission_rate = fields.Float(
         string='Commission (%)',
         default=0.0,
@@ -459,6 +470,7 @@ class SaleOrderLine(models.Model):
                 line.service_commission_rate = line.product_id.product_tmpl_id.service_commission_rate
             else:
                 line.service_commission_rate = 0.0
+                line.service_task_id = False
 
     @api.model_create_multi
     def create(self, vals_list):

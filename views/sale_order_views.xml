@@ -49,8 +49,9 @@
             </xpath>
 
             <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="after">
+                <field name="service_task_id" optional="show" invisible="product_id.type != 'service'"/>
                 <field name="service_commission_rate" optional="show" column_invisible="parent.commission_mode != 'per_product'"/>
-                <field name="service_commission_amount" optional="hide" readonly="1" column_invisible="parent.commission_mode != 'per_product'"/>
+                <field name="service_commission_amount" optional="show" readonly="1" invisible="service_commission_amount == 0"/>
             </xpath>
 
             <!-- SMART BUTTONS for both Vehicle and Service -->
