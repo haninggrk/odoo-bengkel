@@ -16,6 +16,10 @@
                                  help="Choose how Sales Order commission is calculated.">
                             <field name="commission_mode"/>
                         </setting>
+                        <setting string="Default Timesheet Project"
+                                 help="Used for auto-created tasks and timesheets from assigned service order lines.">
+                            <field name="default_timesheet_project_id"/>
+                        </setting>
                     </block>
                 </app>
             </xpath>

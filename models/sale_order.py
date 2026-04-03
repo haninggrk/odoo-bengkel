@@ -268,6 +268,7 @@ class SaleOrder(models.Model):
             # 2. No service has been created yet (avoid duplicates on re-confirmation)
             if order.license_plate and not order.fleet_service_id:
                 order._create_fleet_service()
+            order._create_service_line_tasks_and_timesheets()
 
         return result
 
@@ -289,15 +290,9 @@ class SaleOrder(models.Model):
         vehicle = self._find_or_create_fleet_vehicle()
 
         # Step 2: Determine the service type.
-        # Priority:
-        # 1) Task selected on a service order line
-        # 2) Header-level service type
-        # 3) "Dedicated" fallback
-        # 4) First available service type
-        line_task = self.order_line.filtered(
-            lambda l: l.product_id and l.product_id.type == 'service' and l.service_task_id
-        )[:1].service_task_id
-        service_type = line_task or self.service_type_id
+        # Use the one selected by the user, or default to "Dedicated",
+        # or fall back to the first available service type.
+        service_type = self.service_type_id
         if not service_type:
             service_type = self.env['fleet.service.type'].search(
                 [('name', '=', 'Dedicated')], limit=1
@@ -329,6 +324,59 @@ class SaleOrder(models.Model):
         )
 
         return service
+
+    def _get_default_timesheet_project(self):
+        self.ensure_one()
+        params = self.env['ir.config_parameter'].sudo()
+        project_id = params.get_param('fleet_sales.default_timesheet_project_id')
+        if project_id:
+            project = self.env['project.project'].browse(int(project_id))
+            if project.exists():
+                return project
+        return self.env['project.project'].search([], limit=1)
+
+    def _create_service_line_tasks_and_timesheets(self):
+        self.ensure_one()
+        Task = self.env['project.task']
+        AnalyticLine = self.env['account.analytic.line']
+        project = self._get_default_timesheet_project()
+        if not project:
+            return
+
+        service_lines = self.order_line.filtered(
+            lambda l: l.product_id and l.product_id.type == 'service' and l.assigned_employee_id
+        )
+        for line in service_lines:
+            if line.generated_task_id:
+                continue
+
+            user_ids = []
+            if line.assigned_employee_id.user_id:
+                user_ids = [line.assigned_employee_id.user_id.id]
+
+            task_vals = {
+                'name': '%s - %s' % (self.name, line.name or line.product_id.display_name),
+                'project_id': project.id,
+                'partner_id': self.partner_id.id,
+                'user_ids': [(6, 0, user_ids)],
+            }
+            if 'sale_line_id' in Task._fields:
+                task_vals['sale_line_id'] = line.id
+            task = Task.create(task_vals)
+            line.generated_task_id = task.id
+
+            ts_vals = {
+                'name': _('Auto timesheet from %s') % self.name,
+                'project_id': project.id,
+                'task_id': task.id,
+                'employee_id': line.assigned_employee_id.id,
+                'date': self.service_date or fields.Date.today(),
+                'unit_amount': line.product_uom_qty or 1.0,
+                'company_id': self.company_id.id,
+            }
+            if line.assigned_employee_id.user_id:
+                ts_vals['user_id'] = line.assigned_employee_id.user_id.id
+            AnalyticLine.create(ts_vals)
 
     def _find_or_create_fleet_vehicle(self):
         """Find an existing vehicle by license plate, or create a new one.
@@ -439,10 +487,16 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
-    service_task_id = fields.Many2one(
-        'fleet.service.type',
-        string='Task',
-        help='Task/service type for this line. Available for service products.',
+    assigned_employee_id = fields.Many2one(
+        'hr.employee',
+        string='Employee',
+        help='Employee assigned to this service line. A task and timesheet are auto-created on confirmation.',
+    )
+    generated_task_id = fields.Many2one(
+        'project.task',
+        string='Generated Task',
+        readonly=True,
+        copy=False,
     )
     service_commission_rate = fields.Float(
         string='Commission (%)',
@@ -471,7 +525,7 @@ class SaleOrderLine(models.Model):
                 line.service_commission_rate = line.product_id.product_tmpl_id.service_commission_rate
             else:
                 line.service_commission_rate = 0.0
-                line.service_task_id = False
+                line.assigned_employee_id = False
 
     @api.model_create_multi
     def create(self, vals_list):

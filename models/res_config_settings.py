@@ -25,6 +25,12 @@ class ResConfigSettings(models.TransientModel):
         default='per_product',
         help='Determines how Sales Order commission amount is calculated.',
     )
+    default_timesheet_project_id = fields.Many2one(
+        'project.project',
+        string='Default Timesheet Project',
+        config_parameter='fleet_sales.default_timesheet_project_id',
+        help='Project used when creating auto task and timesheet entries from service sale lines.',
+    )
 
     def set_values(self):
         super().set_values()
