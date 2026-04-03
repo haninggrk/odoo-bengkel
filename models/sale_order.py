@@ -433,12 +433,12 @@ class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
     service_commission_rate = fields.Float(
-        string='Service Commission (%)',
+        string='Commission (%)',
         default=0.0,
         help='Default comes from the product. You can edit it per line.',
     )
     service_commission_amount = fields.Monetary(
-        string='Service Commission Amount',
+        string='Commission Amount',
         currency_field='currency_id',
         compute='_compute_service_commission_amount',
         store=True,

@@ -42,15 +42,15 @@
             </xpath>
 
             <xpath expr="//field[@name='payment_term_id']" position="after">
-                <field name="revenue_commission_rate" invisible="not show_gross_commission"/>
-                <field name="nett_commission_rate"/>
+                <field name="revenue_commission_rate" invisible="not show_gross_commission or commission_mode not in ['gross_service', 'gross_all']"/>
+                <field name="nett_commission_rate" invisible="commission_mode not in ['nett_service', 'nett_all']"/>
                 <field name="commission_mode" readonly="1"/>
                 <field name="commission_amount" readonly="1"/>
             </xpath>
 
             <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="after">
-                <field name="service_commission_rate" optional="show"/>
-                <field name="service_commission_amount" optional="hide" readonly="1"/>
+                <field name="service_commission_rate" optional="show" column_invisible="parent.commission_mode != 'per_product'"/>
+                <field name="service_commission_amount" optional="hide" readonly="1" column_invisible="parent.commission_mode != 'per_product'"/>
             </xpath>
 
             <!-- SMART BUTTONS for both Vehicle and Service -->
