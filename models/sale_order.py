@@ -2,6 +2,9 @@
 from odoo import api, fields, models, _
 
 
+AUTO_TIMESHEET_PREFIX = 'AUTO_SO_TIMESHEET:'
+
+
 class SaleOrder(models.Model):
     # Extending the existing 'sale.order' model to add fleet-related fields and behavior.
     # When a sales order is confirmed, it automatically creates a fleet service
@@ -337,19 +340,25 @@ class SaleOrder(models.Model):
 
     def _create_service_line_tasks_and_timesheets(self):
         self.ensure_one()
-        Task = self.env['project.task']
-        AnalyticLine = self.env['account.analytic.line']
-        project = self._get_default_timesheet_project()
-        if not project:
-            return
-
         service_lines = self.order_line.filtered(
             lambda l: l.product_id and l.product_id.type == 'service' and l.assigned_employee_id
         )
         for line in service_lines:
-            if line.generated_task_id:
-                continue
+            self._ensure_line_task_and_timesheet(line)
 
+    def _ensure_line_task_and_timesheet(self, line):
+        self.ensure_one()
+        if not (line.product_id and line.product_id.type == 'service' and line.assigned_employee_id):
+            return
+
+        project = self._get_default_timesheet_project()
+        if not project:
+            return
+
+        Task = self.env['project.task']
+        AnalyticLine = self.env['account.analytic.line']
+
+        if not line.generated_task_id:
             user_ids = []
             if line.assigned_employee_id.user_id:
                 user_ids = [line.assigned_employee_id.user_id.id]
@@ -362,21 +371,37 @@ class SaleOrder(models.Model):
             }
             if 'sale_line_id' in Task._fields:
                 task_vals['sale_line_id'] = line.id
-            task = Task.create(task_vals)
-            line.generated_task_id = task.id
+            line.generated_task_id = Task.create(task_vals).id
 
-            ts_vals = {
-                'name': _('Auto timesheet from %s') % self.name,
-                'project_id': project.id,
-                'task_id': task.id,
+        if line.assigned_employee_id.user_id and line.generated_task_id:
+            line.generated_task_id.user_ids = [(6, 0, [line.assigned_employee_id.user_id.id])]
+
+        auto_timesheets = AnalyticLine.search([
+            ('task_id', '=', line.generated_task_id.id),
+            ('name', '=like', '%s%%' % AUTO_TIMESHEET_PREFIX),
+        ])
+        if auto_timesheets:
+            vals = {
                 'employee_id': line.assigned_employee_id.id,
                 'date': self.service_date or fields.Date.today(),
-                'unit_amount': 0.0,
-                'company_id': self.company_id.id,
             }
             if line.assigned_employee_id.user_id:
-                ts_vals['user_id'] = line.assigned_employee_id.user_id.id
-            AnalyticLine.create(ts_vals)
+                vals['user_id'] = line.assigned_employee_id.user_id.id
+            auto_timesheets.write(vals)
+            return
+
+        ts_vals = {
+            'name': '%s %s' % (AUTO_TIMESHEET_PREFIX, self.name),
+            'project_id': project.id,
+            'task_id': line.generated_task_id.id,
+            'employee_id': line.assigned_employee_id.id,
+            'date': self.service_date or fields.Date.today(),
+            'unit_amount': 0.0,
+            'company_id': self.company_id.id,
+        }
+        if line.assigned_employee_id.user_id:
+            ts_vals['user_id'] = line.assigned_employee_id.user_id.id
+        AnalyticLine.create(ts_vals)
 
     def _find_or_create_fleet_vehicle(self):
         """Find an existing vehicle by license plate, or create a new one.
@@ -541,4 +566,17 @@ class SaleOrderLine(models.Model):
                 vals['service_commission_rate'] = product.product_tmpl_id.service_commission_rate
             else:
                 vals['service_commission_rate'] = 0.0
-        return super().create(vals_list)
+        lines = super().create(vals_list)
+        for line in lines:
+            if line.order_id.state in {'sale', 'done'}:
+                line.order_id._ensure_line_task_and_timesheet(line)
+        return lines
+
+    def write(self, vals):
+        res = super().write(vals)
+        tracked_fields = {'assigned_employee_id', 'product_id', 'product_uom_qty', 'name'}
+        if tracked_fields.intersection(vals.keys()):
+            for line in self:
+                if line.order_id.state in {'sale', 'done'}:
+                    line.order_id._ensure_line_task_and_timesheet(line)
+        return res
