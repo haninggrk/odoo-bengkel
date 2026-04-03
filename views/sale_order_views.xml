@@ -28,12 +28,6 @@
                        placeholder="Select or create a vehicle..."
                        domain="['|', ('driver_id', '=', partner_id), ('driver_id', '=', False)]"
                        options="{'no_create': True, 'no_open': True}"/>
-                <button name="action_open_selected_vehicle_page"
-                    type="object"
-                    string="Open Vehicle"
-                    class="oe_link"
-                    icon="fa-external-link"
-                    invisible="not existing_fleet_vehicle_id"/>
                 <field name="service_type_id" placeholder="Select service type..."/>
             </xpath>
 
@@ -49,7 +43,7 @@
             </xpath>
 
             <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
-                <field name="assigned_employee_id" optional="show" readonly="display_type"/>
+                <field name="assigned_employee_id" optional="show" readonly="display_type or product_id.type != 'service'"/>
                 <field name="generated_task_id" optional="hide" readonly="1"/>
             </xpath>
 
@@ -73,7 +67,7 @@
                         class="oe_stat_button"
                         icon="fa-wrench"
                         invisible="fleet_service_count == 0">
-                    <field name="fleet_service_count" widget="statinfo" string="Service"/>
+                    <span>Service Detail</span>
                 </button>
             </xpath>
 

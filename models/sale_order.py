@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 AUTO_TIMESHEET_PREFIX = 'AUTO_SO_TIMESHEET:'
@@ -263,6 +264,15 @@ class SaleOrder(models.Model):
         1. Call super() to preserve existing logic (e.g., stock moves, invoicing)
         2. Add your custom logic after
         """
+        for order in self:
+            missing_employee_lines = order.order_line.filtered(
+                lambda l: not l.display_type and l.product_id and l.product_id.type == 'service' and not l.assigned_employee_id
+            )
+            if missing_employee_lines:
+                raise ValidationError(
+                    _('Please assign Employee on all service lines before confirming this Sales Order.')
+                )
+
         result = super().action_confirm()
 
         for order in self:
@@ -500,9 +510,20 @@ class SaleOrder(models.Model):
         the correct form view and field visibility are applied.
         """
         self.ensure_one()
-        # Fetch the base action for fleet services defined in fleet module
+        if self.fleet_service_id and self.fleet_vehicle_id:
+            return {
+                'type': 'ir.actions.act_url',
+                'url': '%s/odoo/sales/%s/fleet/%s/%s/action-643/%s' % (
+                    self.get_base_url(),
+                    self.id,
+                    self.fleet_vehicle_id.id,
+                    self.id,
+                    self.fleet_service_id.id,
+                ),
+                'target': 'self',
+            }
+
         action = self.env['ir.actions.act_window']._for_xml_id('fleet.fleet_vehicle_log_services_action')
-        # Override to show only the form view for this specific service
         action['views'] = [(False, 'form')]
         action['res_id'] = self.fleet_service_id.id
         action['context'] = {'create': False}
