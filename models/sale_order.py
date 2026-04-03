@@ -102,6 +102,36 @@ class SaleOrder(models.Model):
         compute='_compute_fleet_service_count',
     )
 
+    # Commission rates entered on each sales order. They are optional and
+    # default to 0. Which one is used depends on the selected commission mode.
+    revenue_commission_rate = fields.Float(
+        string='Revenue Commission (%)',
+        default=0.0,
+        help='Used by GROSS commission modes from settings.',
+    )
+    nett_commission_rate = fields.Float(
+        string='NETT Commission (%)',
+        default=0.0,
+        help='Used by NETT commission modes from settings.',
+    )
+    commission_mode = fields.Selection(
+        selection=[
+            ('per_product', 'Per Product Commission'),
+            ('nett_service', 'NETT Service Commission'),
+            ('nett_all', 'NETT All Commission'),
+            ('gross_service', 'GROSS Service Commission'),
+            ('gross_all', 'GROSS All Commission'),
+        ],
+        string='Commission Mode',
+        compute='_compute_commission_mode',
+    )
+    commission_amount = fields.Monetary(
+        string='Commission Amount',
+        currency_field='currency_id',
+        compute='_compute_commission_amount',
+        store=True,
+    )
+
     # -------------------------------------------------------------------------
     # COMPUTED METHODS
     # -------------------------------------------------------------------------
@@ -135,6 +165,51 @@ class SaleOrder(models.Model):
     def _compute_fleet_service_count(self):
         for order in self:
             order.fleet_service_count = 1 if order.fleet_service_id else 0
+
+    def _compute_commission_mode(self):
+        param = self.env['ir.config_parameter'].sudo().get_param(
+            'fleet_sales.commission_mode', default='per_product'
+        )
+        valid_modes = {
+            'per_product',
+            'nett_service',
+            'nett_all',
+            'gross_service',
+            'gross_all',
+        }
+        mode = param if param in valid_modes else 'per_product'
+        for order in self:
+            order.commission_mode = mode
+
+    @api.depends(
+        'commission_mode',
+        'revenue_commission_rate',
+        'nett_commission_rate',
+        'amount_total',
+        'amount_untaxed',
+        'order_line.price_total',
+        'order_line.price_subtotal',
+        'order_line.service_commission_amount',
+        'order_line.product_id.detailed_type',
+    )
+    def _compute_commission_amount(self):
+        for order in self:
+            service_lines = order.order_line.filtered(
+                lambda l: l.product_id and l.product_id.detailed_type == 'service'
+            )
+            gross_service_base = sum(service_lines.mapped('price_total'))
+            nett_service_base = sum(service_lines.mapped('price_subtotal'))
+
+            if order.commission_mode == 'per_product':
+                order.commission_amount = sum(order.order_line.mapped('service_commission_amount'))
+            elif order.commission_mode == 'nett_service':
+                order.commission_amount = nett_service_base * (order.nett_commission_rate / 100.0)
+            elif order.commission_mode == 'nett_all':
+                order.commission_amount = order.amount_untaxed * (order.nett_commission_rate / 100.0)
+            elif order.commission_mode == 'gross_service':
+                order.commission_amount = gross_service_base * (order.revenue_commission_rate / 100.0)
+            else:
+                order.commission_amount = order.amount_total * (order.revenue_commission_rate / 100.0)
 
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS
@@ -339,3 +414,51 @@ class SaleOrder(models.Model):
         action['res_id'] = self.fleet_service_id.id
         action['context'] = {'create': False}
         return action
+
+
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+
+    service_commission_rate = fields.Float(
+        string='Service Commission (%)',
+        default=0.0,
+        help='Default comes from the product. You can edit it per line.',
+    )
+    service_commission_amount = fields.Monetary(
+        string='Service Commission Amount',
+        currency_field='currency_id',
+        compute='_compute_service_commission_amount',
+        store=True,
+    )
+
+    @api.depends('price_subtotal', 'service_commission_rate', 'product_id.detailed_type')
+    def _compute_service_commission_amount(self):
+        for line in self:
+            if line.product_id and line.product_id.detailed_type == 'service':
+                line.service_commission_amount = line.price_subtotal * (line.service_commission_rate / 100.0)
+            else:
+                line.service_commission_amount = 0.0
+
+    @api.onchange('product_id')
+    def _onchange_product_id_service_commission_rate(self):
+        for line in self:
+            if line.product_id and line.product_id.detailed_type == 'service':
+                line.service_commission_rate = line.product_id.product_tmpl_id.service_commission_rate
+            else:
+                line.service_commission_rate = 0.0
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        Product = self.env['product.product']
+        for vals in vals_list:
+            if 'service_commission_rate' in vals:
+                continue
+            product_id = vals.get('product_id')
+            if not product_id:
+                continue
+            product = Product.browse(product_id)
+            if product and product.detailed_type == 'service':
+                vals['service_commission_rate'] = product.product_tmpl_id.service_commission_rate
+            else:
+                vals['service_commission_rate'] = 0.0
+        return super().create(vals_list)

@@ -41,6 +41,18 @@
                 <field name="service_date"/>
             </xpath>
 
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="revenue_commission_rate"/>
+                <field name="nett_commission_rate"/>
+                <field name="commission_mode" readonly="1"/>
+                <field name="commission_amount" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']//field[@name='price_unit']" position="after">
+                <field name="service_commission_rate" optional="show"/>
+                <field name="service_commission_amount" optional="hide" readonly="1"/>
+            </xpath>
+
             <!-- SMART BUTTONS for both Vehicle and Service -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <!-- Vehicle smart button: only visible after a vehicle is linked -->
@@ -88,6 +100,7 @@
             <xpath expr="//field[@name='name']" position="after">
                 <field name="license_plate" optional="show"/>
                 <field name="fleet_vehicle_model_id" optional="hide"/>
+                <field name="commission_amount" optional="hide"/>
             </xpath>
         </field>
     </record>

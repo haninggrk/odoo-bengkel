@@ -4,3 +4,5 @@
 from . import sale_order
 from . import fleet_vehicle
 from . import fleet_service
+from . import product_template
+from . import res_config_settings
