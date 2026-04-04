@@ -196,19 +196,20 @@ class SaleOrder(models.Model):
     )
     def _compute_commission_amount(self):
         for order in self:
+            mode = order.commission_mode or 'per_product'
             service_lines = order.order_line.filtered(
                 lambda l: l.product_id and l.product_id.type == 'service'
             )
             gross_service_base = sum(service_lines.mapped('price_total'))
             nett_service_base = sum(service_lines.mapped('price_subtotal'))
 
-            if order.commission_mode == 'per_product':
+            if mode == 'per_product':
                 order.commission_amount = sum(order.order_line.mapped('service_commission_amount'))
-            elif order.commission_mode == 'nett_service':
+            elif mode == 'nett_service':
                 order.commission_amount = nett_service_base * (order.nett_commission_rate / 100.0)
-            elif order.commission_mode == 'nett_all':
+            elif mode == 'nett_all':
                 order.commission_amount = order.amount_untaxed * (order.nett_commission_rate / 100.0)
-            elif order.commission_mode == 'gross_service':
+            elif mode == 'gross_service':
                 order.commission_amount = gross_service_base * (order.revenue_commission_rate / 100.0)
             else:
                 order.commission_amount = order.amount_total * (order.revenue_commission_rate / 100.0)

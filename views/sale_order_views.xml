@@ -48,7 +48,11 @@
             </xpath>
 
             <xpath expr="//field[@name='order_line']/list/field[@name='tax_id' or @name='tax_ids']" position="after">
-                <field name="service_commission_amount" optional="show" readonly="1"/>
+                <field name="service_commission_rate"
+                       optional="show"
+                       column_invisible="parent.commission_mode != 'per_product'"/>
+                <field name="service_commission_amount" optional="show" readonly="1"
+                       column_invisible="parent.commission_mode != 'per_product'"/>
             </xpath>
 
             <!-- SMART BUTTONS for both Vehicle and Service -->
