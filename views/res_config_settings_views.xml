@@ -20,6 +20,30 @@
                                  help="POST requests with vehicle/service context are sent to this URL 3 days before each Next Service Date.">
                             <field name="service_reminder_webhook_url" widget="url" placeholder="https://…"/>
                         </setting>
+                        <setting string="Service Reminder Provider"
+                                 help="Choose Generic Webhook or Evolution API for automatic reminders.">
+                            <field name="service_reminder_provider"/>
+                        </setting>
+                        <setting string="Evolution Base URL"
+                                 help="Base URL of your Evolution server, for example https://evolution.cashfloo.com.">
+                            <field name="evolution_base_url" placeholder="https://evolution.cashfloo.com"/>
+                        </setting>
+                        <setting string="Evolution Instance Name"
+                                 help="Instance used by endpoint /message/sendText/&lt;instance&gt;.">
+                            <field name="evolution_instance_name" placeholder="my-instance"/>
+                        </setting>
+                        <setting string="Evolution API Key"
+                                 help="Secret API key for Evolution requests.">
+                            <field name="evolution_api_key" password="True" placeholder="Paste API key"/>
+                        </setting>
+                        <setting string="Default Country Code"
+                                 help="Used to normalize phone numbers like 08... into international format.">
+                            <field name="evolution_country_code" placeholder="62"/>
+                        </setting>
+                        <setting string="Evolution Message Template"
+                                 help="Placeholders: {driver_name}, {next_service_date}, {vehicle_name}, {license_plate}, {service_type}, {sale_order}.">
+                            <field name="evolution_message_template" placeholder="Hello {driver_name}, reminder for your service on {next_service_date}."/>
+                        </setting>
                     </block>
                 </app>
             </xpath>
