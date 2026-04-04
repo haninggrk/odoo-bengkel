@@ -411,6 +411,8 @@ class SaleOrder(models.Model):
                 'date': self.service_date or fields.Date.today(),
                 'fleet_so_line_id': line.id,
             }
+            if 'so_line' in AnalyticLine._fields:
+                vals['so_line'] = line.id
             if line.assigned_employee_id.user_id:
                 vals['user_id'] = line.assigned_employee_id.user_id.id
             auto_timesheets.write(vals)
@@ -426,6 +428,8 @@ class SaleOrder(models.Model):
             'company_id': self.company_id.id,
             'fleet_so_line_id': line.id,
         }
+        if 'so_line' in AnalyticLine._fields:
+            ts_vals['so_line'] = line.id
         if line.assigned_employee_id.user_id:
             ts_vals['user_id'] = line.assigned_employee_id.user_id.id
         AnalyticLine.create(ts_vals)
