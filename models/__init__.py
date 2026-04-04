@@ -7,3 +7,4 @@ from . import fleet_service
 from . import product_template
 from . import res_config_settings
 from . import project_task_type
+from . import account_analytic_line

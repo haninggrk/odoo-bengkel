@@ -423,6 +423,7 @@ class SaleOrder(models.Model):
             'date': self.service_date or fields.Date.today(),
             'unit_amount': 0.0,
             'company_id': self.company_id.id,
+            'fleet_so_line_id': line.id,
         }
         if line.assigned_employee_id.user_id:
             ts_vals['user_id'] = line.assigned_employee_id.user_id.id
