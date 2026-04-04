@@ -595,7 +595,7 @@ class SaleOrderLine(models.Model):
         for line in self:
             group = line.line_project_fleet_group_id
             if group:
-                user_ids = group.users.ids
+                user_ids = self.env['res.users'].search([('groups_id', 'in', [group.id])]).ids
                 line.line_allowed_employee_ids = Employee.search([('user_id', 'in', user_ids)]) if user_ids else Employee
             else:
                 line.line_allowed_employee_ids = Employee
