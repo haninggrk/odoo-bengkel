@@ -41,8 +41,8 @@
                             <field name="evolution_country_code" placeholder="62"/>
                         </setting>
                         <setting string="Evolution Message Template"
-                                 help="Placeholders: {driver_name}, {next_service_date}, {vehicle_name}, {license_plate}, {service_type}, {sale_order}.">
-                            <field name="evolution_message_template" placeholder="Hello {driver_name}, reminder for your service on {next_service_date}."/>
+                                 help="Placeholders include {driver_name}, {customer_name}, {next_service_date}, {service_date}, {vehicle_name}, {license_plate}, {service_type}, {sale_order}, {amount}, {currency}, {company_name}, {reminder_trigger}, {reminder_sent_at}.">
+                            <field name="evolution_message_template" placeholder="Hello {customer_name}, your {service_type} service for {vehicle_name} ({license_plate}) is scheduled on {next_service_date}."/>
                         </setting>
                     </block>
                 </app>

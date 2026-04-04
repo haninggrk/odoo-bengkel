@@ -83,6 +83,12 @@
             <xpath expr="//field[@name='date']" position="after">
                 <field name="next_service_date"/>
             </xpath>
+            <xpath expr="//form/header" position="inside">
+                <button name="action_send_service_reminder_now"
+                        type="object"
+                        string="Send Reminder Now"
+                        class="oe_highlight"/>
+            </xpath>
         </field>
     </record>
 

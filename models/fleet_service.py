@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 import json
 import logging
 import re
 import urllib.request
 from datetime import date, timedelta
 
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -34,11 +36,18 @@ class FleetVehicleLogServices(models.Model):
     def _build_reminder_payload(self):
         self.ensure_one()
         vehicle = self.vehicle_id
+        driver = vehicle.driver_id
+        partner = driver.commercial_partner_id if driver else False
+        service_date = self.date.date() if hasattr(self.date, 'date') else self.date
         return {
             'service_id': self.id,
             'service_name': self.name or '',
             'service_type': self.service_type_id.name if self.service_type_id else '',
+            'service_date': str(service_date or ''),
             'next_service_date': str(self.next_service_date),
+            'amount': self.amount,
+            'currency': self.currency_id.name if self.currency_id else '',
+            'company_name': self.company_id.name if self.company_id else '',
             'vehicle_id': vehicle.id,
             'vehicle_name': vehicle.name or '',
             'license_plate': vehicle.license_plate or '',
@@ -49,10 +58,15 @@ class FleetVehicleLogServices(models.Model):
             ),
             'odometer': vehicle.odometer,
             'odometer_unit': vehicle.odometer_unit or '',
-            'driver_name': vehicle.driver_id.name if vehicle.driver_id else '',
-            'driver_phone': vehicle.driver_id.phone if vehicle.driver_id else '',
-            'driver_mobile': vehicle.driver_id.mobile if vehicle.driver_id else '',
-            'driver_email': vehicle.driver_id.email if vehicle.driver_id else '',
+            'driver_name': driver.name if driver else '',
+            'driver_phone': driver.phone if driver else '',
+            'driver_mobile': driver.mobile if driver else '',
+            'driver_email': driver.email if driver else '',
+            'customer_name': driver.name if driver else '',
+            'customer_phone': driver.phone if driver else '',
+            'customer_mobile': driver.mobile if driver else '',
+            'customer_email': driver.email if driver else '',
+            'customer_company': partner.name if partner else '',
             'sale_order': self.sale_order_id.name if self.sale_order_id else '',
         }
 
@@ -61,14 +75,15 @@ class FleetVehicleLogServices(models.Model):
             'Hello {driver_name}, reminder for your upcoming service on {next_service_date}. '
             'Vehicle: {vehicle_name} ({license_plate}). Service: {service_type}.'
         )
-        return text_template.format(
-            driver_name=payload.get('driver_name') or 'Customer',
-            next_service_date=payload.get('next_service_date') or '',
-            vehicle_name=payload.get('vehicle_name') or '',
-            license_plate=payload.get('license_plate') or '',
-            service_type=payload.get('service_type') or '',
-            sale_order=payload.get('sale_order') or '',
-        )
+
+        values = defaultdict(str, payload)
+        values['driver_name'] = payload.get('driver_name') or payload.get('customer_name') or 'Customer'
+        values['customer_name'] = payload.get('customer_name') or payload.get('driver_name') or 'Customer'
+
+        try:
+            return text_template.format_map(values)
+        except ValueError as exc:
+            raise UserError(_('Invalid message template format: %s') % exc)
 
     def _normalize_phone(self, number, country_code):
         digits = re.sub(r'\D', '', number or '')
@@ -121,9 +136,9 @@ class FleetVehicleLogServices(models.Model):
         )
         urllib.request.urlopen(req, timeout=15)  # noqa: S310
 
-    def _cron_send_service_reminders(self):
-        """Triggered by daily cron. POSTs webhook payload for every service
-        whose next_service_date falls exactly 3 days from today."""
+    def _send_service_reminder(self, trigger='cron', raise_on_error=False):
+        self.ensure_one()
+
         params = self.env['ir.config_parameter'].sudo()
         provider = params.get_param('fleet_sales.service_reminder_provider', 'webhook')
         webhook_url = params.get_param('fleet_sales.service_reminder_webhook_url')
@@ -134,32 +149,66 @@ class FleetVehicleLogServices(models.Model):
         evolution_template = params.get_param('fleet_sales.evolution_message_template')
 
         if provider == 'webhook' and not webhook_url:
-            return
-        if provider == 'evolution' and (not evolution_base_url or not evolution_instance_name or not evolution_api_key):
-            _logger.warning('Evolution reminder provider is enabled but settings are incomplete.')
-            return
+            if raise_on_error:
+                raise UserError(_('Service reminder webhook URL is not configured.'))
+            return False
 
+        if provider == 'evolution' and (not evolution_base_url or not evolution_instance_name or not evolution_api_key):
+            msg = _('Evolution reminder provider is enabled but settings are incomplete.')
+            if raise_on_error:
+                raise UserError(msg)
+            _logger.warning(msg)
+            return False
+
+        payload = self._build_reminder_payload()
+        payload['reminder_trigger'] = trigger
+        payload['reminder_sent_at'] = str(fields.Datetime.now())
+
+        try:
+            if provider == 'evolution':
+                self._send_evolution_reminder(
+                    payload,
+                    evolution_base_url,
+                    evolution_instance_name,
+                    evolution_api_key,
+                    evolution_country_code,
+                    evolution_template,
+                )
+                _logger.info('Service reminder sent via Evolution: service %s', self.id)
+            else:
+                self._send_webhook_reminder(webhook_url, payload)
+                _logger.info('Service reminder webhook sent: service %s', self.id)
+        except Exception as exc:
+            if raise_on_error:
+                raise UserError(_('Failed to send reminder: %s') % exc)
+            _logger.error(
+                'Failed to send service reminder for service %s via %s: %s',
+                self.id, provider, exc,
+            )
+            return False
+
+        return True
+
+    def action_send_service_reminder_now(self):
+        for service in self:
+            service._send_service_reminder(trigger='manual', raise_on_error=True)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Reminder Sent'),
+                'message': _('Service reminder has been sent.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    def _cron_send_service_reminders(self):
+        """Triggered by daily cron. POSTs webhook payload for every service
+        whose next_service_date falls exactly 3 days from today."""
         target_date = date.today() + timedelta(days=3)
         services = self.search([('next_service_date', '=', target_date)])
 
         for service in services:
-            payload = service._build_reminder_payload()
-            try:
-                if provider == 'evolution':
-                    service._send_evolution_reminder(
-                        payload,
-                        evolution_base_url,
-                        evolution_instance_name,
-                        evolution_api_key,
-                        evolution_country_code,
-                        evolution_template,
-                    )
-                    _logger.info('Service reminder sent via Evolution: service %s', service.id)
-                else:
-                    service._send_webhook_reminder(webhook_url, payload)
-                    _logger.info('Service reminder webhook sent: service %s', service.id)
-            except Exception as exc:
-                _logger.error(
-                    'Failed to send service reminder for service %s via %s: %s',
-                    service.id, provider, exc,
-                )
+            service._send_service_reminder(trigger='cron', raise_on_error=False)

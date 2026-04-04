@@ -65,5 +65,7 @@ class ResConfigSettings(models.TransientModel):
         string='Evolution Message Template',
         config_parameter='fleet_sales.evolution_message_template',
         help='Supported placeholders: {driver_name}, {next_service_date}, {vehicle_name}, '
-             '{license_plate}, {service_type}, {sale_order}.',
+             '{license_plate}, {service_type}, {sale_order}, {service_date}, {amount}, '
+             '{currency}, {company_name}, {customer_name}, {customer_phone}, '
+             '{customer_mobile}, {customer_email}, {reminder_trigger}, {reminder_sent_at}.',
     )
