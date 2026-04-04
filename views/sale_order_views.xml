@@ -128,13 +128,12 @@
     </record>
     <!-- ============================================================
          Rename "Delivery" smart button → "Pickup"
-         (applied at priority 25 so it runs after sale_stock's addition)
+         Inherits from sale_stock's view so the button is in the direct parent
          ============================================================ -->
     <record id="view_order_form_inherit_fleet_sales_pickup" model="ir.ui.view">
         <field name="name">sale.order.form.inherit.fleet.sales.pickup</field>
         <field name="model">sale.order</field>
-        <field name="inherit_id" ref="sale.view_order_form"/>
-        <field name="priority">25</field>
+        <field name="inherit_id" ref="sale_stock.view_order_form_inherit_sale_stock"/>
         <field name="arch" type="xml">
             <xpath expr="//button[@name='action_view_delivery']//field[@name='delivery_count']" position="attributes">
                 <attribute name="string">Pickup</attribute>
