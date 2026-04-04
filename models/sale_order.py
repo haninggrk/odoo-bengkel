@@ -127,11 +127,9 @@ class SaleOrder(models.Model):
             ('gross_all', 'GROSS All Commission'),
         ],
         string='Commission Mode',
-        compute='_compute_commission_mode',
-    )
-    show_gross_commission = fields.Boolean(
-        string='Show Gross Commission',
-        compute='_compute_show_gross_commission',
+        default=lambda self: self.env['ir.config_parameter'].sudo().get_param(
+            'fleet_sales.commission_mode', 'per_product'
+        ),
     )
     commission_amount = fields.Monetary(
         string='Commission Amount',
@@ -174,29 +172,16 @@ class SaleOrder(models.Model):
         for order in self:
             order.fleet_service_count = 1 if order.fleet_service_id else 0
 
-    def _compute_commission_mode(self):
-        params = self.env['ir.config_parameter'].sudo()
-        param = params.get_param('fleet_sales.commission_mode', default='per_product')
-        enable_gross = params.get_param('fleet_sales.enable_gross_commission', default='False') == 'True'
-        valid_modes = {
-            'per_product',
-            'nett_service',
-            'nett_all',
-            'gross_service',
-            'gross_all',
-        }
-        mode = param if param in valid_modes else 'per_product'
-        if not enable_gross and mode in {'gross_service', 'gross_all'}:
-            mode = 'per_product'
+    @api.onchange('commission_mode')
+    def _onchange_commission_mode(self):
+        """Clear the irrelevant rate inputs when the commission mode changes."""
         for order in self:
-            order.commission_mode = mode
-
-    def _compute_show_gross_commission(self):
-        enabled = self.env['ir.config_parameter'].sudo().get_param(
-            'fleet_sales.enable_gross_commission', default='False'
-        ) == 'True'
-        for order in self:
-            order.show_gross_commission = enabled
+            if order.commission_mode in ('nett_service', 'nett_all', 'per_product'):
+                order.revenue_commission_rate = 0.0
+            if order.commission_mode in ('gross_service', 'gross_all', 'per_product'):
+                order.nett_commission_rate = 0.0
+            if order.commission_mode != 'per_product':
+                order.order_line.write({'service_commission_rate': 0.0})
 
     @api.depends(
         'commission_mode',
