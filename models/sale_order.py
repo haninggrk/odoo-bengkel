@@ -409,6 +409,7 @@ class SaleOrder(models.Model):
             vals = {
                 'employee_id': line.assigned_employee_id.id,
                 'date': self.service_date or fields.Date.today(),
+                'fleet_so_line_id': line.id,
             }
             if line.assigned_employee_id.user_id:
                 vals['user_id'] = line.assigned_employee_id.user_id.id
