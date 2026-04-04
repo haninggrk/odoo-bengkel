@@ -573,7 +573,7 @@ class SaleOrderLine(models.Model):
         store=False,
     )
 
-    @api.depends('product_id', 'product_id.project_id', 'product_id.project_id.fleet_group_id')
+    @api.depends('product_id')
     def _compute_line_project_fleet_group_id(self):
         for line in self:
             project = False
