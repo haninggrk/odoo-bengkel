@@ -16,7 +16,6 @@
                                  help="Used for auto-created tasks and timesheets from assigned service order lines.">
                             <field name="timesheet_project_id"/>
                         </setting>
-                        </setting>
                     </block>
                 </app>
             </xpath>
