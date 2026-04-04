@@ -204,7 +204,9 @@ class SaleOrder(models.Model):
             nett_service_base = sum(service_lines.mapped('price_subtotal'))
 
             if mode == 'per_product':
-                order.commission_amount = sum(order.order_line.mapped('service_commission_amount'))
+                order.commission_amount = sum(
+                    order.order_line.filtered(lambda l: not l.display_type).mapped('service_commission_amount')
+                )
             elif mode == 'nett_service':
                 order.commission_amount = nett_service_base * (order.nett_commission_rate / 100.0)
             elif mode == 'nett_all':
@@ -251,14 +253,7 @@ class SaleOrder(models.Model):
         2. Add your custom logic after
         """
         for order in self:
-            missing_employee_lines = order.order_line.filtered(
-                lambda l: not l.display_type and l.product_id and l.product_id.type == 'service' and not l.assigned_employee_id
-            )
-            if missing_employee_lines:
-                raise ValidationError(
-                    _('Please assign Employee on all service lines before confirming this Sales Order.')
-                )
-            # Validate group membership: employee must be in the project's fleet group
+            # Validate group membership only when an employee is assigned.
             for line in order.order_line.filtered(
                 lambda l: not l.display_type and l.product_id and l.product_id.type == 'service' and l.assigned_employee_id
             ):
@@ -630,7 +625,7 @@ class SaleOrderLine(models.Model):
     @api.depends('price_subtotal', 'service_commission_rate', 'product_id.type')
     def _compute_service_commission_amount(self):
         for line in self:
-            if line.product_id and line.product_id.type == 'service':
+            if line.product_id and not line.display_type:
                 line.service_commission_amount = line.price_subtotal * (line.service_commission_rate / 100.0)
             else:
                 line.service_commission_amount = 0.0
@@ -638,11 +633,10 @@ class SaleOrderLine(models.Model):
     @api.onchange('product_id')
     def _onchange_product_id_service_commission_rate(self):
         for line in self:
-            if line.product_id and line.product_id.type == 'service':
+            if line.product_id:
                 line.service_commission_rate = line.product_id.product_tmpl_id.service_commission_rate
             else:
                 line.service_commission_rate = 0.0
-                line.assigned_employee_id = False
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -654,7 +648,7 @@ class SaleOrderLine(models.Model):
             if not product_id:
                 continue
             product = Product.browse(product_id)
-            if product and product.type == 'service':
+            if product:
                 vals['service_commission_rate'] = product.product_tmpl_id.service_commission_rate
             else:
                 vals['service_commission_rate'] = 0.0
