@@ -15,12 +15,12 @@ class TimesheetsAnalysisReport(models.Model):
         return super()._select() + """,
             (
                 CASE
-                    WHEN SO.commission_mode = 'per_product' THEN
-                        COALESCE(SOL.service_commission_amount, 0.0)
-                    WHEN SO.commission_mode IN ('nett_service', 'nett_all') THEN
-                        COALESCE(SOL.price_subtotal, 0.0) * (COALESCE(SO.nett_commission_rate, 0.0) / 100.0)
-                    WHEN SO.commission_mode IN ('gross_service', 'gross_all') THEN
-                        COALESCE(SOL.price_total, 0.0) * (COALESCE(SO.revenue_commission_rate, 0.0) / 100.0)
+                    WHEN FSO.commission_mode = 'per_product' THEN
+                        COALESCE(FSL.service_commission_amount, 0.0)
+                    WHEN FSO.commission_mode IN ('nett_service', 'nett_all') THEN
+                        COALESCE(FSL.price_subtotal, 0.0) * (COALESCE(FSO.nett_commission_rate, 0.0) / 100.0)
+                    WHEN FSO.commission_mode IN ('gross_service', 'gross_all') THEN
+                        COALESCE(FSL.price_total, 0.0) * (COALESCE(FSO.revenue_commission_rate, 0.0) / 100.0)
                     ELSE 0.0
                 END
             ) / COALESCE(NULLIF(COUNT(*) OVER (PARTITION BY A.fleet_so_line_id), 0), 1)
@@ -29,6 +29,6 @@ class TimesheetsAnalysisReport(models.Model):
 
     def _from(self):
         return super()._from() + """
-            LEFT JOIN sale_order_line SOL ON A.fleet_so_line_id = SOL.id
-            LEFT JOIN sale_order SO ON SO.id = SOL.order_id
+            LEFT JOIN sale_order_line FSL ON A.fleet_so_line_id = FSL.id
+            LEFT JOIN sale_order FSO ON FSO.id = FSL.order_id
         """
