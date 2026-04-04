@@ -361,7 +361,11 @@ class SaleOrder(models.Model):
         if not (line.product_id and line.product_id.type == 'service' and line.assigned_employee_id):
             return
 
-        project = self._get_default_timesheet_project()
+        # Prefer the project set directly on the product; fall back to global setting
+        product_project = False
+        if 'project_id' in self.env['product.template']._fields:
+            product_project = line.product_id.project_id
+        project = product_project or self._get_default_timesheet_project()
         if not project:
             return
 
