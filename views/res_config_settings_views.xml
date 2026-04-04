@@ -16,6 +16,10 @@
                                  help="Used for auto-created tasks and timesheets from assigned service order lines.">
                             <field name="timesheet_project_id"/>
                         </setting>
+                        <setting string="Service Reminder Webhook URL"
+                                 help="POST requests with vehicle/service context are sent to this URL 3 days before each Next Service Date.">
+                            <field name="service_reminder_webhook_url" widget="url" placeholder="https://…"/>
+                        </setting>
                     </block>
                 </app>
             </xpath>

@@ -24,3 +24,9 @@ class ResConfigSettings(models.TransientModel):
         config_parameter='fleet_sales.default_timesheet_project_id',
         help='Project used when creating auto task and timesheet entries from service sale lines.',
     )
+    service_reminder_webhook_url = fields.Char(
+        string='Service Reminder Webhook URL',
+        config_parameter='fleet_sales.service_reminder_webhook_url',
+        help='A POST request with vehicle and service details will be sent to this URL '
+             '3 days before each service\'s Next Service Date.',
+    )

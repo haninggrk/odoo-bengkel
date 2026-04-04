@@ -72,4 +72,18 @@
             </xpath>
         </field>
     </record>
+    <!-- ============================================================
+         SERVICE FORM VIEW: Add Next Service Date field
+         ============================================================ -->
+    <record id="fleet_vehicle_log_services_form_inherit_fleet_sales" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.form.inherit.fleet.sales</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date']" position="after">
+                <field name="next_service_date"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
