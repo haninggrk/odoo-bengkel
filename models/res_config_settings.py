@@ -28,12 +28,24 @@ class ResConfigSettings(models.TransientModel):
     default_timesheet_project_id = fields.Many2one(
         'project.project',
         string='Default Timesheet Project',
-        config_parameter='fleet_sales.default_timesheet_project_id',
         help='Project used when creating auto task and timesheet entries from service sale lines.',
     )
 
+    def get_values(self):
+        res = super().get_values()
+        params = self.env['ir.config_parameter'].sudo()
+        project_id = params.get_param('fleet_sales.default_timesheet_project_id', default='')
+        res.update(
+            default_timesheet_project_id=int(project_id) if project_id else False,
+        )
+        return res
+
     def set_values(self):
         super().set_values()
+        self.env['ir.config_parameter'].sudo().set_param(
+            'fleet_sales.default_timesheet_project_id',
+            self.default_timesheet_project_id.id or '',
+        )
         for setting in self:
             if not setting.enable_gross_commission and setting.commission_mode in {'gross_service', 'gross_all'}:
                 self.env['ir.config_parameter'].sudo().set_param('fleet_sales.commission_mode', 'per_product')
