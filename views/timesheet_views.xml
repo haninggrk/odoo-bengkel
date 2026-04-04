@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Add Commission as a pivot measure to the Timesheets-by-Task report -->
+    <!-- Add Commission as a pivot measure to the Timesheets pivot view -->
     <record id="timesheet_view_pivot_fleet_commission" model="ir.ui.view">
         <field name="name">account.analytic.line.pivot.fleet.commission</field>
         <field name="model">account.analytic.line</field>
-        <field name="inherit_id" ref="hr_timesheet.timesheet_view_pivot"/>
+        <field name="inherit_id" ref="hr_timesheet.view_hr_timesheet_line_pivot"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='unit_amount']" position="after">
                 <field name="fleet_commission_amount" type="measure" string="Commission"/>
