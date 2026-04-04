@@ -5,7 +5,7 @@
 {
     'name': 'Fleet Sales',
     # Version format: <odoo_version>.<module_major>.<module_minor>.<module_patch>
-    'version': '19.0.2.1.35',
+    'version': '19.0.2.1.36',
     # Category helps organize the module in Odoo's Apps store / settings.
     'category': 'Sales/Sales',
     'summary': 'Link Sales Orders to Fleet Services with automatic vehicle and service creation',
@@ -39,6 +39,7 @@ This module adds the following features:
     'data': [
         'security/ir.model.access.csv',
         'views/product_views.xml',
+        'views/project_views.xml',
         'views/res_config_settings_views.xml',
         'views/sale_order_views.xml',
         'views/fleet_vehicle_views.xml',

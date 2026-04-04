@@ -258,6 +258,27 @@ class SaleOrder(models.Model):
                 raise ValidationError(
                     _('Please assign Employee on all service lines before confirming this Sales Order.')
                 )
+            # Validate group membership: employee must be in the project's fleet group
+            for line in order.order_line.filtered(
+                lambda l: not l.display_type and l.product_id and l.product_id.type == 'service' and l.assigned_employee_id
+            ):
+                group = line.line_project_fleet_group_id
+                if group and line.assigned_employee_id.user_id:
+                    if group not in line.assigned_employee_id.user_id.groups_id:
+                        raise ValidationError(_(
+                            'Employee "%s" is not a member of the required group "%s" '
+                            'for project "%s". Please assign a qualified employee.',
+                            line.assigned_employee_id.name,
+                            group.full_name,
+                            (line.product_id.project_id or order._get_default_timesheet_project()).name,
+                        ))
+                elif group and not line.assigned_employee_id.user_id:
+                    raise ValidationError(_(
+                        'Employee "%s" has no linked user and cannot be verified against '
+                        'the required group "%s". Please link a user to this employee.',
+                        line.assigned_employee_id.name,
+                        group.full_name,
+                    ))
 
         result = super().action_confirm()
 
@@ -545,6 +566,22 @@ class SaleOrderLine(models.Model):
         compute='_compute_service_commission_amount',
         store=True,
     )
+    line_project_fleet_group_id = fields.Many2one(
+        'res.groups',
+        string='Project Fleet Group',
+        compute='_compute_line_project_fleet_group_id',
+        store=False,
+    )
+
+    @api.depends('product_id', 'product_id.project_id', 'product_id.project_id.fleet_group_id')
+    def _compute_line_project_fleet_group_id(self):
+        for line in self:
+            project = False
+            if 'project_id' in self.env['product.template']._fields:
+                project = line.product_id.project_id
+            if not project:
+                project = line.order_id._get_default_timesheet_project()
+            line.line_project_fleet_group_id = project.fleet_group_id if project else False
 
     @api.depends('price_subtotal', 'service_commission_rate', 'product_id.type')
     def _compute_service_commission_amount(self):
