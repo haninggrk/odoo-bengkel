@@ -384,6 +384,19 @@ class SaleOrder(models.Model):
         AnalyticLine = self.env['account.analytic.line']
 
         if not line.generated_task_id:
+            existing_task = False
+            # Reuse task already created by native sale_timesheet flow.
+            if 'task_id' in line._fields and line.task_id:
+                existing_task = line.task_id
+            elif 'sale_line_id' in Task._fields:
+                existing_task = Task.search([('sale_line_id', '=', line.id)], limit=1)
+
+            if existing_task:
+                line.generated_task_id = existing_task.id
+                if 'sale_line_id' in Task._fields and not existing_task.sale_line_id:
+                    existing_task.sale_line_id = line.id
+
+        if not line.generated_task_id:
             user_ids = []
             if line.assigned_employee_id.user_id:
                 user_ids = [line.assigned_employee_id.user_id.id]
