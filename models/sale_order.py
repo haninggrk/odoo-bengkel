@@ -341,7 +341,7 @@ class SaleOrder(models.Model):
     def _get_default_timesheet_project(self):
         self.ensure_one()
         params = self.env['ir.config_parameter'].sudo()
-        project_id = params.get_param('fleet_sales.default_timesheet_project_id')
+        project_id = params.get_param('fleet_sales.default_timesheet_project_id')  # stored by timesheet_project_id field
         if project_id:
             project = self.env['project.project'].browse(int(project_id))
             if project.exists():
