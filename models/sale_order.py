@@ -264,12 +264,12 @@ class SaleOrder(models.Model):
             ):
                 group = line.line_project_fleet_group_id
                 if group and line.assigned_employee_id.user_id:
-                    if group not in line.assigned_employee_id.user_id.groups_id:
+                    if group not in line.assigned_employee_id.user_id.sudo().groups_id:
                         raise ValidationError(_(
                             'Employee "%s" is not a member of the required group "%s" '
                             'for project "%s". Please assign a qualified employee.',
                             line.assigned_employee_id.name,
-                            group.full_name,
+                            group.sudo().full_name,
                             (line.product_id.project_id or order._get_default_timesheet_project()).name,
                         ))
                 elif group and not line.assigned_employee_id.user_id:
@@ -595,7 +595,7 @@ class SaleOrderLine(models.Model):
         for line in self:
             group = line.line_project_fleet_group_id
             if group:
-                user_ids = self.env['res.users'].search([('groups_id', 'in', [group.id])]).ids
+                user_ids = group.sudo().users.ids
                 line.line_allowed_employee_ids = Employee.search([('user_id', 'in', user_ids)]) if user_ids else Employee
             else:
                 line.line_allowed_employee_ids = Employee
