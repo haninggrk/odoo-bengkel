@@ -572,6 +572,12 @@ class SaleOrderLine(models.Model):
         compute='_compute_line_project_fleet_group_id',
         store=False,
     )
+    line_allowed_employee_ids = fields.Many2many(
+        'hr.employee',
+        compute='_compute_line_allowed_employees',
+        store=False,
+        string='Allowed Employees',
+    )
 
     @api.depends('product_id')
     def _compute_line_project_fleet_group_id(self):
@@ -582,6 +588,17 @@ class SaleOrderLine(models.Model):
             if not project:
                 project = line.order_id._get_default_timesheet_project()
             line.line_project_fleet_group_id = project.fleet_group_id if project else False
+
+    @api.depends('product_id')
+    def _compute_line_allowed_employees(self):
+        Employee = self.env['hr.employee']
+        for line in self:
+            group = line.line_project_fleet_group_id
+            if group:
+                user_ids = group.users.ids
+                line.line_allowed_employee_ids = Employee.search([('user_id', 'in', user_ids)]) if user_ids else Employee
+            else:
+                line.line_allowed_employee_ids = Employee
 
     @api.depends('price_subtotal', 'service_commission_rate', 'product_id.type')
     def _compute_service_commission_amount(self):

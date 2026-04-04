@@ -44,7 +44,9 @@
 
             <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
                 <field name="line_project_fleet_group_id" column_invisible="1"/>
-                <field name="assigned_employee_id" optional="show" readonly="display_type"/>
+                <field name="line_allowed_employee_ids" column_invisible="1"/>
+                <field name="assigned_employee_id" optional="show" readonly="display_type"
+                       domain="line_project_fleet_group_id and [('id', 'in', line_allowed_employee_ids)] or []"/>
                 <field name="generated_task_id" optional="hide" readonly="1"/>
             </xpath>
 
