@@ -264,7 +264,11 @@ class SaleOrder(models.Model):
             ):
                 group = line.line_project_fleet_group_id
                 if group and line.assigned_employee_id.user_id:
-                    if group not in line.assigned_employee_id.user_id.sudo().groups_id:
+                    self.env.cr.execute(
+                        "SELECT 1 FROM res_groups_users_rel WHERE gid = %s AND uid = %s",
+                        [group.id, line.assigned_employee_id.user_id.id]
+                    )
+                    if not self.env.cr.fetchone():
                         raise ValidationError(_(
                             'Employee "%s" is not a member of the required group "%s" '
                             'for project "%s". Please assign a qualified employee.',
@@ -595,7 +599,11 @@ class SaleOrderLine(models.Model):
         for line in self:
             group = line.line_project_fleet_group_id
             if group:
-                user_ids = group.sudo().users.ids
+                self.env.cr.execute(
+                    "SELECT uid FROM res_groups_users_rel WHERE gid = %s",
+                    [group.id]
+                )
+                user_ids = [row[0] for row in self.env.cr.fetchall()]
                 line.line_allowed_employee_ids = Employee.search([('user_id', 'in', user_ids)]) if user_ids else Employee
             else:
                 line.line_allowed_employee_ids = Employee
