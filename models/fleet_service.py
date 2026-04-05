@@ -211,6 +211,15 @@ class FleetVehicleLogServices(models.Model):
     def _send_service_reminder(self, trigger='cron', raise_on_error=False):
         self.ensure_one()
 
+        now_utc = fields.Datetime.now()
+        now_wib = now_utc + timedelta(hours=7)
+        if not (7 <= now_wib.hour < 18):
+            msg = _('Reminders can only be sent between 07:00 and 18:00 WIB.')
+            if raise_on_error:
+                raise UserError(msg)
+            _logger.info('Skipped reminder for service %s outside WIB window: %s', self.id, now_wib)
+            return False
+
         params = self.env['ir.config_parameter'].sudo()
         provider = params.get_param('fleet_sales.service_reminder_provider', 'webhook')
         webhook_url = params.get_param('fleet_sales.service_reminder_webhook_url')
