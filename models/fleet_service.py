@@ -42,6 +42,24 @@ class FleetVehicleLogServices(models.Model):
         help='Scheduled date for the next service. '
              'A reminder will be sent in advance based on settings.',
     )
+    reminder_sent = fields.Boolean(
+        string='Reminder Sent',
+        default=False,
+        copy=False,
+        help='Checked automatically after reminder is sent successfully.',
+    )
+    reminder_sent_at = fields.Datetime(
+        string='Reminder Sent At',
+        copy=False,
+    )
+    reminder_last_trigger = fields.Selection(
+        selection=[
+            ('cron', 'Cron'),
+            ('manual', 'Manual'),
+        ],
+        string='Last Reminder Trigger',
+        copy=False,
+    )
 
     def _build_reminder_payload(self):
         self.ensure_one()
@@ -216,6 +234,12 @@ class FleetVehicleLogServices(models.Model):
             else:
                 self._send_webhook_reminder(webhook_url, payload)
                 _logger.info('Service reminder webhook sent: service %s', self.id)
+
+            self.write({
+                'reminder_sent': True,
+                'reminder_sent_at': fields.Datetime.now(),
+                'reminder_last_trigger': trigger,
+            })
         except Exception as exc:
             if raise_on_error:
                 raise UserError(_('Failed to send reminder: %s') % exc)
@@ -229,6 +253,9 @@ class FleetVehicleLogServices(models.Model):
 
     def action_send_service_reminder_now(self):
         for service in self:
+            if service.reminder_sent:
+                sent_at = service.reminder_sent_at or '-'
+                raise UserError(_('Reminder already sent for this service at %s.') % sent_at)
             service._send_service_reminder(trigger='manual', raise_on_error=True)
 
         return {
@@ -243,12 +270,17 @@ class FleetVehicleLogServices(models.Model):
         }
 
     def _cron_send_service_reminders(self):
-        """Triggered by daily cron. Sends reminders for services whose
-        next_service_date falls exactly N days from today."""
+        """Triggered by daily cron. Sends reminders for upcoming services
+        from today until N days ahead, once per service record."""
         params = self.env['ir.config_parameter'].sudo()
         reminder_days = int(params.get_param('fleet_sales.service_reminder_days', 3) or 3)
-        target_date = date.today() + timedelta(days=reminder_days)
-        services = self.search([('next_service_date', '=', target_date)])
+        today = date.today()
+        target_date = today + timedelta(days=reminder_days)
+        services = self.search([
+            ('next_service_date', '>=', today),
+            ('next_service_date', '<=', target_date),
+            ('reminder_sent', '=', False),
+        ])
 
         for service in services:
             service._send_service_reminder(trigger='cron', raise_on_error=False)
