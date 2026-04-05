@@ -55,6 +55,10 @@ class FleetVehicleLogServices(models.Model):
             or (self.service_type_id.name if self.service_type_id else False)
             or 'Service %s' % self.id
         )
+        driver_phone = getattr(driver, 'phone', '') if driver else ''
+        driver_mobile = getattr(driver, 'mobile', False) if driver else False
+        driver_mobile = driver_mobile or driver_phone
+        driver_email = getattr(driver, 'email', '') if driver else ''
         return {
             'service_id': self.id,
             'service_name': service_label,
@@ -76,13 +80,13 @@ class FleetVehicleLogServices(models.Model):
             'odometer': vehicle.odometer,
             'odometer_unit': vehicle.odometer_unit or '',
             'driver_name': driver.name if driver else '',
-            'driver_phone': driver.phone if driver else '',
-            'driver_mobile': driver.mobile if driver else '',
-            'driver_email': driver.email if driver else '',
+            'driver_phone': driver_phone,
+            'driver_mobile': driver_mobile,
+            'driver_email': driver_email,
             'customer_name': driver.name if driver else '',
-            'customer_phone': driver.phone if driver else '',
-            'customer_mobile': driver.mobile if driver else '',
-            'customer_email': driver.email if driver else '',
+            'customer_phone': driver_phone,
+            'customer_mobile': driver_mobile,
+            'customer_email': driver_email,
             'customer_company': partner.name if partner else '',
             'sale_order': self.sale_order_id.name if self.sale_order_id else '',
         }
