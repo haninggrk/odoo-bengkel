@@ -9,17 +9,19 @@ from datetime import date, timedelta
 
 from odoo import _, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.misc import format_date
 
 _logger = logging.getLogger(__name__)
 
 DEFAULT_EVOLUTION_TEMPLATE = (
-    'Halo Bapak/Ibu [Nama]\n\n'
-    'Kami dari [Nama Bengkel] ingin mengingatkan bahwa mobil Anda '
-    '([Merk Mobil] - [No. Polisi]) terakhir diservis pada [Tanggal Servis Terakhir].\n\n'
-    'Saat ini sudah mendekati waktu servis rutin berikutnya. Agar kendaraan tetap '
-    'dalam kondisi prima, kami sarankan untuk melakukan pengecekan.\n\n'
-    'Silakan hubungi kami untuk booking jadwal ya.\n\n'
-    'Terima kasih'
+    'Halo Bapak/Ibu [Nama] 👋\n\n'
+    'Kami dari [Nama Bengkel] ingin mengingatkan jadwal servis kendaraan Anda:\n\n'
+    '1️⃣ Kendaraan: [Merk Mobil] ([No. Polisi])\n'
+    '2️⃣ Servis terakhir: [Tanggal Servis Terakhir]\n'
+    '3️⃣ Servis berikutnya: [Tanggal Servis Berikutnya]\n\n'
+    '✅ Agar kendaraan tetap prima, kami sarankan booking servis sekarang.\n'
+    '📞 Silakan hubungi kami untuk penjadwalan.\n\n'
+    'Terima kasih 🙏'
 )
 
 
@@ -68,6 +70,9 @@ class FleetVehicleLogServices(models.Model):
         driver = vehicle.driver_id
         partner = driver.commercial_partner_id if driver else False
         service_date = self.date.date() if hasattr(self.date, 'date') else self.date
+        service_date = fields.Date.to_date(service_date) if service_date else False
+        next_service_date = fields.Date.to_date(self.next_service_date) if self.next_service_date else False
+        lang_code = self.env.user.lang or 'id_ID'
         service_label = (
             getattr(self, 'name', False)
             or self.display_name
@@ -84,6 +89,12 @@ class FleetVehicleLogServices(models.Model):
             'service_type': self.service_type_id.name if self.service_type_id else '',
             'service_date': str(service_date or ''),
             'next_service_date': str(self.next_service_date),
+            'service_date_formatted': (
+                format_date(self.env, service_date, lang_code=lang_code) if service_date else ''
+            ),
+            'next_service_date_formatted': (
+                format_date(self.env, next_service_date, lang_code=lang_code) if next_service_date else ''
+            ),
             'amount': self.amount,
             'currency': self.currency_id.name if self.currency_id else '',
             'company_name': self.company_id.name if self.company_id else '',
@@ -117,9 +128,10 @@ class FleetVehicleLogServices(models.Model):
         bracket_placeholders = {
             '[Nama]': '{customer_name}',
             '[Nama Bengkel]': '{company_name}',
-            '[Merk Mobil]': '{vehicle_name}',
+            '[Merk Mobil]': '{vehicle_brand} {vehicle_model}',
             '[No. Polisi]': '{license_plate}',
-            '[Tanggal Servis Terakhir]': '{service_date}',
+            '[Tanggal Servis Terakhir]': '{service_date_formatted}',
+            '[Tanggal Servis Berikutnya]': '{next_service_date_formatted}',
         }
         for token, replacement in bracket_placeholders.items():
             text_template = text_template.replace(token, replacement)
