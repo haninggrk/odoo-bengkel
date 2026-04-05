@@ -73,6 +73,13 @@ class FleetVehicleLogServices(models.Model):
         service_date = fields.Date.to_date(service_date) if service_date else False
         next_service_date = fields.Date.to_date(self.next_service_date) if self.next_service_date else False
         lang_code = self.env.user.lang or 'id_ID'
+        vehicle_brand = (
+            vehicle.model_id.brand_id.name
+            if vehicle.model_id and vehicle.model_id.brand_id else ''
+        )
+        vehicle_model = vehicle.model_id.name if vehicle.model_id else ''
+        vehicle_name_short = ('%s %s' % (vehicle_brand, vehicle_model)).strip()
+        vehicle_name_short = re.sub(r'\s+', ' ', vehicle_name_short).strip()
         service_label = (
             getattr(self, 'name', False)
             or self.display_name
@@ -99,13 +106,11 @@ class FleetVehicleLogServices(models.Model):
             'currency': self.currency_id.name if self.currency_id else '',
             'company_name': self.company_id.name if self.company_id else '',
             'vehicle_id': vehicle.id,
-            'vehicle_name': vehicle.name or '',
+            'vehicle_name': vehicle_name_short or vehicle.name or '',
+            'vehicle_display_name': vehicle.name or '',
             'license_plate': vehicle.license_plate or '',
-            'vehicle_model': vehicle.model_id.name if vehicle.model_id else '',
-            'vehicle_brand': (
-                vehicle.model_id.brand_id.name
-                if vehicle.model_id and vehicle.model_id.brand_id else ''
-            ),
+            'vehicle_model': vehicle_model,
+            'vehicle_brand': vehicle_brand,
             'service_description': self.description or '',
             'odometer': vehicle.odometer,
             'odometer_unit': vehicle.odometer_unit or '',

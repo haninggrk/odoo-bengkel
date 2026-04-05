@@ -45,7 +45,7 @@
                             <field name="evolution_country_code" placeholder="62"/>
                         </setting>
                         <setting string="WhatsApp Message Template"
-                                                                 help="Placeholders include {driver_name}, {customer_name}, {next_service_date}, {next_service_date_formatted}, {service_date}, {service_date_formatted}, {vehicle_name}, {vehicle_brand}, {vehicle_model}, {license_plate}, {service_type}, {sale_order}, {amount}, {currency}, {company_name}, {reminder_trigger}, {reminder_sent_at}.">
+                                 help="Placeholders include {driver_name}, {customer_name}, {next_service_date}, {next_service_date_formatted}, {service_date}, {service_date_formatted}, {vehicle_name}, {vehicle_display_name}, {vehicle_brand}, {vehicle_model}, {license_plate}, {service_type}, {sale_order}, {amount}, {currency}, {company_name}, {reminder_trigger}, {reminder_sent_at}.">
                             <field name="evolution_message_template"
                                    widget="text"
                                                                      placeholder="Halo Bapak/Ibu [Nama] 👋&#10;&#10;Kami dari [Nama Bengkel] ingin mengingatkan jadwal servis kendaraan Anda:&#10;&#10;1️⃣ Kendaraan: [Merk Mobil] ([No. Polisi])&#10;2️⃣ Servis terakhir: [Tanggal Servis Terakhir]&#10;3️⃣ Servis berikutnya: [Tanggal Servis Berikutnya]&#10;&#10;✅ Agar kendaraan tetap prima, kami sarankan booking servis sekarang.&#10;📞 Silakan hubungi kami untuk penjadwalan.&#10;&#10;Terima kasih 🙏"/>

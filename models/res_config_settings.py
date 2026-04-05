@@ -77,7 +77,7 @@ class ResConfigSettings(models.TransientModel):
         help='Supported placeholders: {driver_name}, {next_service_date}, {vehicle_name}, '
              '{license_plate}, {service_type}, {sale_order}, {service_date}, {amount}, '
              '{currency}, {company_name}, {customer_name}, {customer_phone}, '
-             '{service_date_formatted}, {next_service_date_formatted}, {vehicle_brand}, {vehicle_model}, '
+               '{service_date_formatted}, {next_service_date_formatted}, {vehicle_brand}, {vehicle_model}, {vehicle_display_name}, '
              '{customer_mobile}, {customer_email}, {reminder_trigger}, {reminder_sent_at}.',
     )
     evolution_test_number = fields.Char(
