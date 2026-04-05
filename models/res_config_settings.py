@@ -37,7 +37,7 @@ class ResConfigSettings(models.TransientModel):
         ],
         string='Service Reminder Provider',
         config_parameter='fleet_sales.service_reminder_provider',
-        default='webhook',
+        default='evolution',
         help='Choose where automatic service reminders are sent.',
     )
     evolution_base_url = fields.Char(

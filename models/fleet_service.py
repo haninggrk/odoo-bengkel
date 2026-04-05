@@ -149,9 +149,18 @@ class FleetVehicleLogServices(models.Model):
         evolution_template = params.get_param('fleet_sales.evolution_message_template')
 
         if provider == 'webhook' and not webhook_url:
-            if raise_on_error:
-                raise UserError(_('Service reminder webhook URL is not configured.'))
-            return False
+            if evolution_base_url and evolution_instance_name and evolution_api_key:
+                provider = 'evolution'
+            else:
+                msg = _(
+                    'Service Reminder Provider is set to Generic Webhook, but Webhook URL is empty. '
+                    'If you want WhatsApp from this module, switch provider to Evolution API and fill '
+                    'Evolution Base URL, Instance Name, and API Key.'
+                )
+                if raise_on_error:
+                    raise UserError(msg)
+                _logger.warning(msg)
+                return False
 
         if provider == 'evolution' and (not evolution_base_url or not evolution_instance_name or not evolution_api_key):
             msg = _('Evolution reminder provider is enabled but settings are incomplete.')
