@@ -30,7 +30,7 @@ class FleetVehicleLogServices(models.Model):
     next_service_date = fields.Date(
         string='Next Service Date',
         help='Scheduled date for the next service. '
-             'A webhook reminder will be sent 3 days in advance.',
+             'A reminder will be sent in advance based on settings.',
     )
 
     def _build_reminder_payload(self):
@@ -214,9 +214,11 @@ class FleetVehicleLogServices(models.Model):
         }
 
     def _cron_send_service_reminders(self):
-        """Triggered by daily cron. POSTs webhook payload for every service
-        whose next_service_date falls exactly 3 days from today."""
-        target_date = date.today() + timedelta(days=3)
+        """Triggered by daily cron. Sends reminders for services whose
+        next_service_date falls exactly N days from today."""
+        params = self.env['ir.config_parameter'].sudo()
+        reminder_days = int(params.get_param('fleet_sales.service_reminder_days', 3) or 3)
+        target_date = date.today() + timedelta(days=reminder_days)
         services = self.search([('next_service_date', '=', target_date)])
 
         for service in services:

@@ -24,6 +24,10 @@
                                  help="Choose Generic Webhook or Evolution API for automatic reminders.">
                             <field name="service_reminder_provider"/>
                         </setting>
+                        <setting string="Reminder Days Before Service"
+                                 help="How many days before Next Service Date the reminder should be sent.">
+                            <field name="service_reminder_days"/>
+                        </setting>
                         <setting string="Evolution Base URL"
                                  help="Base URL of your Evolution server, for example https://evolution.cashfloo.com.">
                             <field name="evolution_base_url" placeholder="https://evolution.cashfloo.com"/>
@@ -45,6 +49,16 @@
                             <field name="evolution_message_template"
                                    widget="text"
                                    placeholder="Hello {customer_name},&#10;Your {service_type} service for {vehicle_name} ({license_plate}) is scheduled on {next_service_date}.&#10;Thank you."/>
+                        </setting>
+                        <setting string="Test WhatsApp Number"
+                                 help="Use this to send a test message from module settings via Evolution API."
+                                 invisible="service_reminder_provider != 'evolution'">
+                            <field name="evolution_test_number" placeholder="08123456789"/>
+                            <button name="action_test_evolution_whatsapp"
+                                    string="Send Test WhatsApp"
+                                    type="object"
+                                    class="btn-secondary"
+                                    invisible="not evolution_test_number"/>
                         </setting>
                     </block>
                 </app>
