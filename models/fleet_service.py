@@ -11,6 +11,16 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+DEFAULT_EVOLUTION_TEMPLATE = (
+    'Halo Bapak/Ibu [Nama]\n\n'
+    'Kami dari [Nama Bengkel] ingin mengingatkan bahwa mobil Anda '
+    '([Merk Mobil] - [No. Polisi]) terakhir diservis pada [Tanggal Servis Terakhir].\n\n'
+    'Saat ini sudah mendekati waktu servis rutin berikutnya. Agar kendaraan tetap '
+    'dalam kondisi prima, kami sarankan untuk melakukan pengecekan.\n\n'
+    'Silakan hubungi kami untuk booking jadwal ya.\n\n'
+    'Terima kasih'
+)
+
 
 class FleetVehicleLogServices(models.Model):
     # Extend the fleet service model to add a back-link to the sales order
@@ -62,6 +72,7 @@ class FleetVehicleLogServices(models.Model):
                 vehicle.model_id.brand_id.name
                 if vehicle.model_id and vehicle.model_id.brand_id else ''
             ),
+            'service_description': self.description or '',
             'odometer': vehicle.odometer,
             'odometer_unit': vehicle.odometer_unit or '',
             'driver_name': driver.name if driver else '',
@@ -77,10 +88,18 @@ class FleetVehicleLogServices(models.Model):
         }
 
     def _build_evolution_message_text(self, payload, template):
-        text_template = template or (
-            'Hello {driver_name}, reminder for your upcoming service on {next_service_date}. '
-            'Vehicle: {vehicle_name} ({license_plate}). Service: {service_type}.'
-        )
+        text_template = template or DEFAULT_EVOLUTION_TEMPLATE
+
+        # Support user-friendly bracket placeholders in saved templates.
+        bracket_placeholders = {
+            '[Nama]': '{customer_name}',
+            '[Nama Bengkel]': '{company_name}',
+            '[Merk Mobil]': '{vehicle_name}',
+            '[No. Polisi]': '{license_plate}',
+            '[Tanggal Servis Terakhir]': '{service_date}',
+        }
+        for token, replacement in bracket_placeholders.items():
+            text_template = text_template.replace(token, replacement)
 
         values = defaultdict(str, payload)
         values['driver_name'] = payload.get('driver_name') or payload.get('customer_name') or 'Customer'

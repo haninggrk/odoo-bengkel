@@ -48,7 +48,7 @@
                                  help="Placeholders include {driver_name}, {customer_name}, {next_service_date}, {service_date}, {vehicle_name}, {license_plate}, {service_type}, {sale_order}, {amount}, {currency}, {company_name}, {reminder_trigger}, {reminder_sent_at}.">
                             <field name="evolution_message_template"
                                    widget="text"
-                                   placeholder="Hello {customer_name},&#10;Your {service_type} service for {vehicle_name} ({license_plate}) is scheduled on {next_service_date}.&#10;Thank you."/>
+                                    placeholder="Halo Bapak/Ibu [Nama]&#10;&#10;Kami dari [Nama Bengkel] ingin mengingatkan bahwa mobil Anda ([Merk Mobil] - [No. Polisi]) terakhir diservis pada [Tanggal Servis Terakhir].&#10;&#10;Saat ini sudah mendekati waktu servis rutin berikutnya. Agar kendaraan tetap dalam kondisi prima, kami sarankan untuk melakukan pengecekan.&#10;&#10;Silakan hubungi kami untuk booking jadwal ya.&#10;&#10;Terima kasih"/>
                         </setting>
                         <setting string="Test WhatsApp Number"
                                  help="Use this to send a test message from module settings via Evolution API."
