@@ -302,6 +302,23 @@ class FleetVehicleLogServices(models.Model):
             },
         }
 
+    def action_reset_service_reminder_status(self):
+        self.write({
+            'reminder_sent': False,
+            'reminder_sent_at': False,
+            'reminder_last_trigger': False,
+        })
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Reminder Status Reset'),
+                'message': _('Reminder status has been reset. You can send again.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
     def _cron_send_service_reminders(self):
         """Triggered by daily cron. Sends reminders for upcoming services
         from today until N days ahead, once per service record."""
