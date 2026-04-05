@@ -168,9 +168,7 @@ class FleetVehicleLogServices(models.Model):
         endpoint = '%s/message/sendText/%s' % (base_url.rstrip('/'), instance_name)
         body = {
             'number': number,
-            'textMessage': {
-                'text': self._build_evolution_message_text(payload, template),
-            },
+            'text': self._build_evolution_message_text(payload, template),
         }
         data = json.dumps(body).encode('utf-8')
         req = urllib.request.Request(

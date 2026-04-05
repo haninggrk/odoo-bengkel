@@ -126,9 +126,7 @@ class ResConfigSettings(models.TransientModel):
         endpoint = '%s/message/sendText/%s' % (base_url.rstrip('/'), instance_name)
         body = {
             'number': normalized_number,
-            'textMessage': {
-                'text': text,
-            },
+            'text': text,
         }
         req = urllib.request.Request(
             endpoint,
