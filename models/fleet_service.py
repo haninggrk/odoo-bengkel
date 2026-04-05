@@ -39,9 +39,15 @@ class FleetVehicleLogServices(models.Model):
         driver = vehicle.driver_id
         partner = driver.commercial_partner_id if driver else False
         service_date = self.date.date() if hasattr(self.date, 'date') else self.date
+        service_label = (
+            getattr(self, 'name', False)
+            or self.display_name
+            or (self.service_type_id.name if self.service_type_id else False)
+            or 'Service %s' % self.id
+        )
         return {
             'service_id': self.id,
-            'service_name': self.name or '',
+            'service_name': service_label,
             'service_type': self.service_type_id.name if self.service_type_id else '',
             'service_date': str(service_date or ''),
             'next_service_date': str(self.next_service_date),
