@@ -61,7 +61,7 @@ class ResConfigSettings(models.TransientModel):
         default='62',
         help='Used to normalize numbers that start with 0.',
     )
-    evolution_message_template = fields.Text(
+    evolution_message_template = fields.Char(
         string='Evolution Message Template',
         config_parameter='fleet_sales.evolution_message_template',
         help='Supported placeholders: {driver_name}, {next_service_date}, {vehicle_name}, '
