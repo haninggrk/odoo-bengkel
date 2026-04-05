@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import urllib.request
+from urllib.error import HTTPError
 from datetime import date, timedelta
 
 from odoo import _, fields, models
@@ -181,7 +182,16 @@ class FleetVehicleLogServices(models.Model):
             },
             method='POST',
         )
-        urllib.request.urlopen(req, timeout=15)  # noqa: S310
+        try:
+            urllib.request.urlopen(req, timeout=15)  # noqa: S310
+        except HTTPError as exc:
+            body = ''
+            try:
+                body = exc.read().decode('utf-8', errors='replace')
+            except Exception:  # noqa: BLE001
+                body = ''
+            details = body or str(exc)
+            raise UserError(_('Evolution API request failed (%s): %s') % (exc.code, details))
 
     def _send_service_reminder(self, trigger='cron', raise_on_error=False):
         self.ensure_one()
@@ -240,6 +250,14 @@ class FleetVehicleLogServices(models.Model):
                 'reminder_sent_at': fields.Datetime.now(),
                 'reminder_last_trigger': trigger,
             })
+        except UserError:
+            if raise_on_error:
+                raise
+            _logger.error(
+                'Failed to send service reminder for service %s via %s with user error.',
+                self.id, provider,
+            )
+            return False
         except Exception as exc:
             if raise_on_error:
                 raise UserError(_('Failed to send reminder: %s') % exc)
