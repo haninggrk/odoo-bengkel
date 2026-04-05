@@ -17,7 +17,7 @@
                             <field name="timesheet_project_id"/>
                         </setting>
                         <setting string="Service Reminder Webhook URL"
-                                 help="POST requests with vehicle/service context are sent to this URL 3 days before each Next Service Date.">
+                                 help="Used only when provider is Generic Webhook. POST requests with vehicle/service context are sent to this URL 3 days before each Next Service Date.">
                             <field name="service_reminder_webhook_url" widget="url" placeholder="https://…"/>
                         </setting>
                         <setting string="Service Reminder Provider"
@@ -40,9 +40,11 @@
                                  help="Used to normalize phone numbers like 08... into international format.">
                             <field name="evolution_country_code" placeholder="62"/>
                         </setting>
-                        <setting string="Evolution Message Template"
+                        <setting string="WhatsApp Message Template"
                                  help="Placeholders include {driver_name}, {customer_name}, {next_service_date}, {service_date}, {vehicle_name}, {license_plate}, {service_type}, {sale_order}, {amount}, {currency}, {company_name}, {reminder_trigger}, {reminder_sent_at}.">
-                            <field name="evolution_message_template" placeholder="Hello {customer_name}, your {service_type} service for {vehicle_name} ({license_plate}) is scheduled on {next_service_date}."/>
+                            <field name="evolution_message_template"
+                                   widget="text"
+                                   placeholder="Hello {customer_name},&#10;Your {service_type} service for {vehicle_name} ({license_plate}) is scheduled on {next_service_date}.&#10;Thank you."/>
                         </setting>
                     </block>
                 </app>
