@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_project_form_inherit_kedoo_sales_timesheet_assignment" model="ir.ui.view">
+        <field name="name">project.project.form.inherit.kedoo.sales.timesheet.assignment</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="sales_assignment_group_id"
+                       placeholder="No group restriction..."
+                       options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

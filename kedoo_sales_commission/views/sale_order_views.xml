@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit_kedoo_sales_commission" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.kedoo.sales.commission</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="revenue_commission_rate" invisible="commission_mode not in ['gross_service', 'gross_all']"/>
+                <field name="nett_commission_rate" invisible="commission_mode not in ['nett_service', 'nett_all']"/>
+                <field name="commission_mode"/>
+                <field name="commission_amount" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='tax_id' or @name='tax_ids']" position="after">
+                <field name="service_commission_rate"
+                       optional="show"
+                       column_invisible="parent.commission_mode != 'per_product'"/>
+                <field name="service_commission_amount"
+                       optional="show"
+                       readonly="1"
+                       column_invisible="parent.commission_mode != 'per_product'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_tree_inherit_kedoo_sales_commission" model="ir.ui.view">
+        <field name="name">sale.order.tree.inherit.kedoo.sales.commission</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="commission_amount" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

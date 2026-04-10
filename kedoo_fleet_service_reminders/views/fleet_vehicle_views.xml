@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="fleet_vehicle_log_services_form_inherit_kedoo_fleet_service_reminders" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.form.inherit.kedoo.fleet.service.reminders</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='date']" position="after">
+                <field name="next_service_date"/>
+                <field name="reminder_sent" readonly="1"/>
+                <field name="reminder_sent_at" readonly="1"/>
+            </xpath>
+            <xpath expr="//form/header" position="inside">
+                <button name="action_send_service_reminder_now"
+                        type="object"
+                        string="Send Reminder Now"
+                        class="oe_highlight"
+                        invisible="reminder_sent"/>
+                <button name="action_reset_service_reminder_status"
+                        type="object"
+                        string="Reset Reminder"
+                        class="btn-secondary"
+                        invisible="not reminder_sent"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="timesheets_analysis_report_pivot_task_sales_commission" model="ir.ui.view">
+        <field name="name">timesheets.analysis.report.pivot.task.sales.commission</field>
+        <field name="model">timesheets.analysis.report</field>
+        <field name="inherit_id" ref="hr_timesheet.timesheets_analysis_report_pivot_task"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='unit_amount']" position="after">
+                <field name="sales_commission_amount" type="measure" string="Commission"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

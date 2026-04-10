@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_kedoo_fleet_service_reminders" model="ir.ui.view">
+        <field name="name">res.config.settings.form.inherit.kedoo.fleet.service.reminders</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Kedoo Fleet" name="kedoo_fleet_app" groups="sales_team.group_sale_manager">
+                    <block title="Fleet Service Reminders">
+                        <setting string="Service Reminder Provider"
+                                 help="Choose Generic Webhook or Evolution API for automatic reminders.">
+                            <field name="service_reminder_provider"/>
+                        </setting>
+                        <setting string="Service Reminder Webhook URL"
+                                 help="Used only when provider is Generic Webhook. POST requests are sent with service context.">
+                            <field name="service_reminder_webhook_url" widget="url" placeholder="https://..."/>
+                        </setting>
+                        <setting string="Reminder Days Before Service"
+                                 help="How many days before Next Service Date reminder should be sent.">
+                            <field name="service_reminder_days"/>
+                        </setting>
+                        <setting string="Evolution Base URL"
+                                 help="Base URL of your Evolution server, e.g. https://evolution.cashfloo.com.">
+                            <field name="evolution_base_url" placeholder="https://evolution.cashfloo.com"/>
+                        </setting>
+                        <setting string="Evolution Instance Name"
+                                 help="Instance used by endpoint /message/sendText/<instance>.">
+                            <field name="evolution_instance_name" placeholder="my-instance"/>
+                        </setting>
+                        <setting string="Evolution API Key"
+                                 help="Secret API key for Evolution requests.">
+                            <field name="evolution_api_key" password="True" placeholder="Paste API key"/>
+                        </setting>
+                        <setting string="Default Country Code"
+                                 help="Used to normalize phone numbers like 08... into international format.">
+                            <field name="evolution_country_code" placeholder="62"/>
+                        </setting>
+                        <setting string="WhatsApp Message Template"
+                                 help="Placeholders include customer, vehicle, service, and schedule fields.">
+                            <field name="evolution_message_template" widget="text"/>
+                        </setting>
+                        <setting string="Test WhatsApp Number"
+                                 help="Send a test message via Evolution API from module settings."
+                                 invisible="service_reminder_provider != 'evolution'">
+                            <field name="evolution_test_number" placeholder="08123456789"/>
+                            <button name="action_test_evolution_whatsapp"
+                                    string="Send Test WhatsApp"
+                                    type="object"
+                                    class="btn-secondary"
+                                    invisible="not evolution_test_number"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
