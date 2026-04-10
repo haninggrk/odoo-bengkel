@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        VIEW INHERITANCE in Odoo:
+        Instead of rewriting the entire sale order form, we "inherit" the existing
+        view and inject our custom fields using XPath expressions.
+        This keeps our module compatible with future Odoo upgrades.
+    -->
+
+    <!-- ============================================================
+         FORM VIEW: Add License Plate and Vehicle Model to Sale Order
+         ============================================================ -->
+    <record id="view_order_form_inherit_fleet_sales" model="ir.ui.view">
+        <!-- 'name' is a human-readable identifier for this view -->
+        <field name="name">sale.order.form.inherit.fleet.sales</field>
+        <!-- 'model' specifies which Odoo model this view is for -->
+        <field name="model">sale.order</field>
+        <!-- 'inherit_id' references the PARENT view we are extending.
+             'sale.view_order_form' is the XML ID of the standard sale order form. -->
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- XPath: find the 'partner_id' field and insert our fields AFTER it.
+                 'position="after"' means our fields appear right below the customer field. -->
+            <xpath expr="//field[@name='partner_id']" position="after">
+                 <!-- Vehicle dropdown: users can pick an existing customer vehicle
+                     or create a new one through a simplified modal form. -->
+                <field name="existing_fleet_vehicle_id"
+                       placeholder="Select or create a vehicle..."
+                       domain="['|', ('driver_id', '=', partner_id), ('driver_id', '=', False)]"
+                       options="{'no_create': True, 'no_open': True}"/>
+                <field name="service_type_id" placeholder="Select service type..."/>
+            </xpath>
+
+            <xpath expr="//field[@name='validity_date']" position="before">
+                <field name="service_date"/>
+            </xpath>
+
+            <xpath expr="//field[@name='payment_term_id']" position="after">
+                <field name="revenue_commission_rate" invisible="commission_mode not in ['gross_service', 'gross_all']"/>
+                <field name="nett_commission_rate" invisible="commission_mode not in ['nett_service', 'nett_all']"/>
+                <field name="commission_mode"/>
+                <field name="commission_amount" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_template_id']" position="after">
+                <field name="line_project_fleet_group_id" column_invisible="1"/>
+                <field name="line_allowed_employee_ids" column_invisible="1"/>
+                <field name="assigned_employee_id" optional="show" readonly="display_type"
+                       domain="line_project_fleet_group_id and [('id', 'in', line_allowed_employee_ids)] or []"/>
+                <field name="generated_task_id" optional="hide" readonly="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='order_line']/list/field[@name='tax_id' or @name='tax_ids']" position="after">
+                <field name="service_commission_rate"
+                       optional="show"
+                       column_invisible="parent.commission_mode != 'per_product'"/>
+                <field name="service_commission_amount" optional="show" readonly="1"
+                       column_invisible="parent.commission_mode != 'per_product'"/>
+            </xpath>
+
+            <!-- SMART BUTTONS for both Vehicle and Service -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <!-- Vehicle smart button: only visible after a vehicle is linked -->
+                <button name="action_view_fleet_vehicle"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-car"
+                        invisible="fleet_vehicle_count == 0">
+                    <span>Vehicle Detail</span>
+                </button>
+                <!-- Service smart button: only visible after a service is created -->
+                <button name="action_view_fleet_service"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-wrench"
+                        invisible="fleet_service_count == 0">
+                    <span>Service Detail</span>
+                </button>
+            </xpath>
+
+            <!-- Hidden fields: must be in the form XML so the ORM loads them,
+                 even though they're invisible to the user. Needed for smart buttons,
+                 computed fields, domains, and onchange logic. -->
+            <xpath expr="//sheet" position="inside">
+                <field name="fleet_vehicle_id" invisible="1"/>
+                <field name="fleet_service_id" invisible="1"/>
+                <field name="has_existing_vehicles" invisible="1"/>
+                <field name="license_plate" invisible="1"/>
+                <field name="fleet_vehicle_model_id" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         TREE/LIST VIEW: Add License Plate column to Sale Order list
+         ============================================================ -->
+    <record id="view_order_tree_inherit_fleet_sales" model="ir.ui.view">
+        <field name="name">sale.order.tree.inherit.fleet.sales</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <!-- Insert columns after the order name (SO number) column.
+                 'optional="show"' means the column is visible by default but can be toggled.
+                 'optional="hide"' means it's hidden by default but users can enable it. -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="license_plate" optional="show"/>
+                <field name="fleet_vehicle_model_id" optional="hide"/>
+                <field name="commission_amount" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================
+         SEARCH VIEW: Add License Plate to search/filter bar
+         ============================================================ -->
+    <record id="view_sales_order_filter_inherit_fleet_sales" model="ir.ui.view">
+        <field name="name">sale.order.search.inherit.fleet.sales</field>
+        <field name="model">sale.order</field>
+        <!-- Note: the search view ID in 'sale' module is different from form/tree -->
+        <field name="inherit_id" ref="sale.sale_order_view_search_inherit_sale"/>
+        <field name="arch" type="xml">
+            <!-- Adding a search field allows users to type a license plate in the
+                 search bar and filter orders matching that plate. -->
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="license_plate" string="License Plate"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- ============================================================
+         Rename "Delivery" smart button → "Pickup"
+         Inherits from sale_stock's view so the button is in the direct parent
+         ============================================================ -->
+    <record id="view_order_form_inherit_fleet_sales_pickup" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.fleet.sales.pickup</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_stock.view_order_form_inherit_sale_stock"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_view_delivery']//field[@name='delivery_count']" position="attributes">
+                <attribute name="string">Pickup</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
